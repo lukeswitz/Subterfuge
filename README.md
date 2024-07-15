@@ -1,42 +1,63 @@
 # Subterfuge
 
-Subterfuge is a comprehensive subdomain tool designed to uncover hidden subdomains with generated permutations.
+A comprehensive tool for subdomain discovery and permutation generation.
 
-## Contents
+## Workflow
 
-1. **subterfuge.sh**: Generate permutations based on discovered subdomains.
-2. **SubdomainTool/**: Contains a subdomain discovery script to populate subdomains.txt if you don't happen to have a list available. 
+1. **Subdomain Discovery**:
+    - `subterfuge_finder.sh` discovers subdomains using advanced tools.
+    - Discovered subdomains are saved in a text file.
+
+2. **Permutation Generation and Validation**:
+    - `subterfuge.sh` generates permutations and checks if they are live.
+  
+## Installation
+
+Both scripts will automatically install necessary tools if not already installed:
+
+## Tools
+
+### Discovery
+- **Subfinder**: Fast subdomain enumeration.
+- **Amass**: In-depth DNS enumeration.
+- **Assetfinder**: Quick subdomain discovery.
+- **Findomain**: Efficient subdomain enumeration.
+
+### Permutation and Validation
+- **AlterX**: Subdomain permutation generator.
+- **Gotator**: Generates permutations and combinations.
+- **AltDNS**: Generates permutations, alterations, and mutations.
+- **DnsGen**: Generates permutations from a wordlist.
+- **Ripgen**: Generates permutations from subdomains.
+- **Lepus**: Uses a Markov chain model for permutations.
+- **PureDNS**: Resolves subdomains.
+- **Httpx**: Checks live subdomains.
 
 ## Usage
 
-1. **Discover Subdomains**:
-   - Navigate to the `SubdomainTool` directory.
-   - Run the `subterfuge_finder.sh` script with the target domain:
-     ```bash
-     cd SubdomainTool
-     chmod +x subterfuge_finder.sh
-     ./subterfuge_finder.sh example.com
-     ```
-   - This will save the discovered subdomains in `SubdomainTool/results/example.com/subdomains.txt`.
+### Step 1: Discover Subdomains
 
-2. **Generate Permutations**:
-   - Navigate back to the root directory.
-   - Run the `subterfuge.sh` script:
-     ```bash
-     cd ..
-     chmod +x subterfuge.sh
-     ./subterfuge.sh example.com
-     ```
-   - This will use the `SubdomainTool/results/example.com/subdomains.txt` file to generate permutations and resolve them.
+Navigate to the `SubdomainTool` directory and run:
+```bash
+cd SubdomainTool
+chmod +x subterfuge_finder.sh
+./subterfuge_finder.sh example.com
+```
 
-## Installation
+### Step 2: Generate Permutations and Check Validity
 
-Both scripts will automatically install the necessary tools if they are not already installed.
+Navigate back to the root directory and run:
+```bash
+cd ..
+chmod +x subterfuge.sh
+./subterfuge.sh example.com
+```
+
 
 ## Contributing
 
-Feel free to contribute by opening issues or submitting pull requests to improve this tool.
+Open issues or submit pull requests to contribute.
 
 ## License
 
-This project is licensed under the MIT License.
+Licensed under the MIT License.
