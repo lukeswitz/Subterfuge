@@ -7,8 +7,6 @@ Subterfuge is a comprehensive subdomain tool designed to uncover hidden subdomai
 1. **subterfuge.sh**: Generate permutations based on discovered subdomains.
 2. **SubdomainTool/**: Contains a subdomain discovery script to populate subdomains.txt if you don't happen to have a list available. 
 
-README.
-
 ## Usage
 
 1. **Discover Subdomains**:
