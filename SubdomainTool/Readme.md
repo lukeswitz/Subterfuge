@@ -1,12 +1,15 @@
 # Subterfuge Subdomain Finder
 
-Discover hidden subdomains using multiple advanced tools and compile them into a single file for use with Subterfuge.
+Discover hidden subdomains using multiple advanced tools and compile them into a single file. Stored for use with Subterfuge.
 
 ## Tools Used
-- **Subfinder**: Fast passive subdomain enumeration.
-- **Amass**: In-depth DNS enumeration and subdomain discovery.
-- **Assetfinder**: Quickly finds subdomains and IP addresses.
-- **Findomain**: Efficient subdomain enumeration tool.
+
+- **Amass**
+- **Assetfinder**
+- **DNSEnum** 
+- **Findomain**
+- **Subfinder**
+- **Sublist3r**
 
 ## Prerequisites
 
@@ -15,25 +18,19 @@ Ensure the following tools are installed on your system:
 
 ## Installation
 
-Run the script to install the necessary tools:
-
-```bash
-chmod +x subterfuge_finder.sh
-./subterfuge_finder.sh
-```
+Run the script to install the necessary tools
 
 ## Usage
 
 Run the Script with a Domain:
 
 ```bash
-./subterfuge_finder.sh example.com
-Replace example.com with your target domain.
+python3 subterfuge_finder.py example.com
 ```
 
 ## Output
 
-- The script will save the discovered subdomains in the results/$DOMAIN/subdomains.txt file.
+- The script will save the discovered subdomains in the results/$DOMAIN/subdomains.txt file to be used with Subterfuge.
 
 ## Contributing
 
