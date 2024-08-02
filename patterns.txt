@@ -1,0 +1,12 @@
+{{sub}}-{{word}}.{{suffix}}
+{{word}}-{{sub}}.{{suffix}}
+{{sub}}.{{word}}.{{suffix}}
+{{word}}.{{sub}}.{{suffix}}
+{{sub}}{{word}}.{{suffix}}
+{{word}}{{sub}}.{{suffix}}
+{{sub}}-{{word}}{{number}}.{{suffix}}
+{{word}}-{{sub}}{{number}}.{{suffix}}
+{{region}}.{{sub}}.{{suffix}}
+{{sub}}-{{year}}.{{suffix}}
+{{sub}}{{number}}.{{suffix}}
+{{sub}}-{{number}}.{{suffix}}
