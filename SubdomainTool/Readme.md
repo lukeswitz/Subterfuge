@@ -1,6 +1,6 @@
 # Subterfuge Subdomain Finder
 
-Discover hidden subdomains using multiple advanced tools and compile them into a single file. Stored for use with Subterfuge.
+Discover hidden subdomains using multiple advanced tools and compile them into a single file. Each is checked to be alive using httpx. A final list is stored in a folder for use with Subterfuge.
 
 ## Tools Used
 
@@ -10,6 +10,7 @@ Discover hidden subdomains using multiple advanced tools and compile them into a
 - **Findomain**
 - **Subfinder**
 - **Sublist3r**
+- **httpx**
 
 ## Prerequisites
 
@@ -28,7 +29,28 @@ Run the Script with a Domain:
 python3 subterfuge_finder.py example.com
 ```
 
-## Output
+## Sample Output
+(with amass disabled)
+```
+Discovery initiated for: tesla.com
+sublist3r is already installed.
+amass is already installed.
+assetfinder is already installed.
+findomain is already installed.
+subfinder is already installed.
+dnsenum is already installed.
+Discovering Subdomains...
+Running sublist3r...
+sublist3r finished - Total Subdomains: 326
+Running assetfinder...
+assetfinder finished - Total Subdomains: 380
+Running findomain...
+findomain finished - Total Subdomains: 713
+Running subfinder...
+subfinder finished - Total Subdomains: 1219
+Checking which subdomains are live...
+Checking subdomains:  19%|███████▊                                | 237/1219 [04:56<15:40,  1.04subdomain/s]
+```
 
 - The script will save the discovered subdomains in the results/$DOMAIN/subdomains.txt file to be used with Subterfuge.
 
