@@ -1,9 +1,23 @@
+#!/usr/bin/env python3
+
 import os
 import subprocess
 import sys
 import time
 import argparse
 from tqdm import tqdm  # Import tqdm for progress bar
+
+print("""
+              8        o                d'b                      
+              8        8                8                        
+.oPYo. o    o 8oPYo.  o8P .oPYo. oPYo. o8P  o    o .oPYo. .oPYo. 
+Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8 
+  'Yb. 8    8 8    8   8  8.     8      8   8    8 8    8 8.     
+`YooP' `YooP' `YooP'   8  `Yooo' 8      8   `YooP' `YooP8 `Yooo' 
+:.....::.....::.....:::..::.....:..:::::..:::.....::....8 :.....:
+:::::::::::::::::::::::::::::::::::::::::::::::::::::ooP'.:::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
+""")
 
 total_subdomains = set()
 total_permutations = 0  # Initialize total permutations counter
@@ -90,7 +104,7 @@ def check_live_subdomains(subdomains_file, output_file):
         for subdomain in subdomains:
             # Run the httpx command for each subdomain (adjust as necessary)
             try:
-                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 5 -t 200 -rl 500 -rlm 6000"
+                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 2 -t 300 -rl 1000 -rlm 10000"
                 run_command(command)
                 pbar.update(1)
             except subprocess.CalledProcessError as e:
@@ -116,27 +130,32 @@ def main(domain):
 
     output_folder = os.path.abspath(f"results/{domain}")
     os.makedirs(output_folder, exist_ok=True)
+    
     subdomain_file = os.path.abspath(f"SubdomainTool/results/{domain}/subdomains.txt")
-    patterns_file = os.path.abspath("patterns.txt")  # Use the correct patterns file
+    live_subdomains_file = os.path.abspath(f"SubdomainTool/results/{domain}/live_subdomains.txt")
+    patterns_file = os.path.abspath("patterns.txt")  # Corrected path to the root level
 
     check_and_install_tools()
 
-    if not os.path.exists(subdomain_file):
-        print(f"No subdomain file found at {subdomain_file}")
+    # Check if either subdomains.txt or live_subdomains.txt exists
+    if not os.path.exists(subdomain_file) and not os.path.exists(live_subdomains_file):
+        print(f"No subdomain file found at {subdomain_file} or {live_subdomains_file}")
         return
     
-    subdomain_count = count_lines(subdomain_file)
+    # Use the appropriate file for subdomain processing
+    file_to_use = subdomain_file if os.path.exists(subdomain_file) else live_subdomains_file
+
+    subdomain_count = count_lines(file_to_use)
     pattern_count = count_lines(patterns_file)
     print(f"Number of subdomains: {subdomain_count}")
     print(f"Number of patterns: {pattern_count}")
 
     tools = {
-        "alterx": f"alterx -l {subdomain_file} -p {patterns_file} -ms 100 -o {output_folder}/alterx_permutations.txt",
-        "gotator": f"gotator -sub {subdomain_file} -perm {patterns_file} -fast -depth 1 -numbers 1 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
-        #"altdns": f"altdns -i {subdomain_file} -o {output_folder}/altdns_permutations.txt -w wordlist.txt",
-        "dnsgen": f"dnsgen -f {subdomain_file} > {output_folder}/dnsgen_permutations.txt",
-        "ripgen": f"ripgen -d {subdomain_file} > {output_folder}/ripgen_permutations.txt",
-        "lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {subdomain_file}"
+        "alterx": f"alterx -l {file_to_use} -p {patterns_file} -ms 100 -o {output_folder}/alterx_permutations.txt",
+        "gotator": f"gotator -sub {file_to_use} -perm {patterns_file} -fast -depth 1 -numbers 1 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
+        "dnsgen": f"dnsgen -f {file_to_use} > {output_folder}/dnsgen_permutations.txt",
+        "ripgen": f"ripgen -d {file_to_use} > {output_folder}/ripgen_permutations.txt",
+        "lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {file_to_use}"
     }
 
     for tool, command in tools.items():
@@ -159,9 +178,11 @@ def main(domain):
     end_time = time.time()
     runtime = end_time - start_time
 
-    print(f"Total unique live subdomains found: {len(total_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
+    # Print the results
+    print(f"Total unique live subdomains found: {len(total_subdomains)}.\nRuntime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
     print(f"Total permutations found: {total_permutations}")  # Print total permutations found
     print(f"Subdomain enumeration complete. Results saved to {output_folder}.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Subdomain enumeration script")
