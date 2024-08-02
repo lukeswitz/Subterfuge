@@ -2,24 +2,10 @@
 
 Discover hidden subdomains using multiple advanced tools and compile them into a single file. Each is checked to be alive using httpx. A final list is stored in a folder for use with Subterfuge.
 
-## Tools Used
-
-- **Amass**
-- **Assetfinder**
-- **DNSEnum** 
-- **Findomain**
-- **Subfinder**
-- **Sublist3r**
-- **httpx**
-
 ## Prerequisites
 
 Ensure the following tools are installed on your system:
 - **Golang**: Required for installing Go-based tools.
-
-## Installation
-
-Run the script to install the necessary tools
 
 ## Usage
 
@@ -36,6 +22,13 @@ Comment out the line around `170` as shown:
 ## Sample Output
 (with amass disabled)
 ```
+           _                                 
+           | |     _                          
+  ___ _   _| |__ _| |_ _____  ____ ____ _____ 
+ /___) | | |  _ (_   _) ___ |/ ___) ___|____ |
+|___ | |_| | |_) )| |_| ____| |  | |   / ___ |
+(___/|____/|____/  \__)_____)_|  |_|   \_____|
+
 Discovery initiated for: tesla.com
 sublist3r is already installed.
 amass is already installed.
@@ -57,6 +50,15 @@ Checking subdomains:  19%|███████▊                              
 ```
 
 - The script will save the discovered subdomains in the results/$DOMAIN/subdomains.txt file to be used with Subterfuge.
+
+## Tools Used
+
+- **Amass**
+- **Assetfinder**
+- **Findomain**
+- **Subfinder**
+- **Sublist3r**
+- **httpx**
 
 ## Contributing
 
