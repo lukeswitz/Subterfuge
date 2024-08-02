@@ -90,6 +90,32 @@ def download_subdomains_list(output_folder):
     except Exception as e:
         print(f"Error downloading subdomains list: {e}")
 
+def is_valid_domain(domain):
+    """Validate if the domain is in a proper format."""
+    regex = re.compile(
+        r'^(?:[a-zA-Z0-9]' # First character of the domain
+        r'(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)' # Sub domain + hostname
+        r'+[a-zA-Z]{2,6}$' # First level TLD
+    )
+    return re.match(regex, domain) is not None
+
+def run_tool(tool, command, output_folder, domain):
+    """Run a specific tool and process its output."""
+    global total_subdomains
+    print(f"Running {tool}...")
+    try:
+        run_command(command, timeout=21100)  # Set a 30-minute timeout for each tool
+        with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
+            result = [line.strip() for line in file if is_valid_domain(line.strip())]
+        total_subdomains.update(result)
+        print(f"{tool} finished - Total Subdomains: {len(total_subdomains)}")
+        return result
+    except subprocess.CalledProcessError as e:
+        print(f"Error running {tool}: {e}")
+        return []
+    except subprocess.TimeoutExpired as e:
+        print(f"Timeout running {tool}: {e}")
+        return []
 
 def check_live_subdomains(subdomains_file, output_file):
     """Check which subdomains are live using httpx with a progress bar."""
@@ -97,7 +123,7 @@ def check_live_subdomains(subdomains_file, output_file):
     
     # Read the subdomains from file
     with open(subdomains_file, 'r') as file:
-        subdomains = [line.strip() for line in file]
+        subdomains = [line.strip() for line in file if is_valid_domain(line.strip())]
     
     total_count = len(subdomains)
     live_subdomains = set()
@@ -127,25 +153,6 @@ def check_live_subdomains(subdomains_file, output_file):
     
     return live_subdomains
 
-
-def run_tool(tool, command, output_folder, domain):
-    """Run a specific tool and process its output."""
-    global total_subdomains
-    print(f"Running {tool}...")
-    try:
-        run_command(command, timeout=21100)  # Set a 30-minute timeout for each tool
-        with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
-            result = [line.strip() for line in file]
-        total_subdomains.update(result)
-        print(f"{tool} finished - Total Subdomains: {len(total_subdomains)}")
-        return result
-    except subprocess.CalledProcessError as e:
-        print(f"Error running {tool}: {e}")
-        return []
-    except subprocess.TimeoutExpired as e:
-        print(f"Timeout running {tool}: {e}")
-        return []
-        
 
 def main(domain):
     start_time = time.time()
