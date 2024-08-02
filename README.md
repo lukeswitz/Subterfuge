@@ -1,8 +1,19 @@
-# Subterfuge
-A comprehensive tool for subdomain discovery and permutation generation.
+```
+              8        o                d'b                      
+              8        8                8                        
+.oPYo. o    o 8oPYo.  o8P .oPYo. oPYo. o8P  o    o .oPYo. .oPYo. 
+Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8 
+  'Yb. 8    8 8    8   8  8.     8      8   8    8 8    8 8.     
+`YooP' `YooP' `YooP'   8  `Yooo' 8      8   `YooP' `YooP8 `Yooo' 
+:.....::.....::.....:::..::.....:..:::::..:::.....::....8 :.....:
+:::::::::::::::::::::::::::::::::::::::::::::::::::::ooP'.:::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
+```
+
+**A comprehensive tool for subdomain discovery and permutation generation.**__
 
 > [!IMPORTANT]  
-> Subdomain discovery is needed in a subdomains.txt file if you don't use the included subdomain finder tool. 
+> Subdomain discovery is **needed in the subdomains.txt file** if you don't use the included subdomain finder tool. More QOL features soon, such as specifying the location and more.
 ```
 ├── README.md
 ├── SubdomainTool
@@ -14,6 +25,7 @@ A comprehensive tool for subdomain discovery and permutation generation.
 ```
 
 ## Workflow
+
 
 1. **Subdomain Discovery**:
     - `subTerra.py` discovers subdomains using a deep set of tooling.
