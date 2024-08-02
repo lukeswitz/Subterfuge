@@ -28,6 +28,10 @@ Run the Script with a Domain:
 ```bash
 python3 subterfuge_finder.py example.com
 ```
+### Disable httpx check
+Comment out the line around `170` as shown:
+
+` # live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)`
 
 ## Sample Output
 (with amass disabled)
