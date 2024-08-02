@@ -3,6 +3,9 @@ import os
 import argparse
 import urllib.request
 import time
+import re
+import signal
+from tqdm import tqdm 
 
 total_subdomains = set()
 
@@ -50,7 +53,7 @@ def check_and_install_tools():
     tools_install_commands = {
         "sublist3r": (
             "git clone https://github.com/aboul3la/Sublist3r.git && "
-            "cd Sublist3r && sudo pip install -r requirements.txt && sudo python setup.py install"
+            "cd Sublist3r && pip install -r requirements.txt && sudo python setup.py install"
         ),
         "amass": "sudo apt-get install amass -y",
         "assetfinder": "go install github.com/tomnomnom/assetfinder@latest",
@@ -67,8 +70,8 @@ def check_and_install_tools():
 
 def download_subdomains_list(output_folder):
     """Download the list of subdomains."""
-    url = "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/combined_subdomains.txt"
-    file_path = os.path.join(output_folder, "subdomains-top-1million.txt")
+    url = "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt"
+    file_path = "discovery-wordlist.txt"
     print(f"Downloading {url} to {file_path}")
     try:
         urllib.request.urlretrieve(url, file_path)
@@ -76,19 +79,53 @@ def download_subdomains_list(output_folder):
         print(f"Error downloading subdomains list: {e}")
 
 
-def run_tool(tool, command, output_folder):
+def check_live_subdomains(subdomains_file, output_file):
+    """Check which subdomains are live using httpx with a progress bar."""
+    print("Checking which subdomains are live...")
+    
+    # Read the subdomains from file
+    with open(subdomains_file, 'r') as file:
+        subdomains = [line.strip() for line in file]
+    
+    total_count = len(subdomains)
+    live_subdomains = set()
+    
+    # Create a progress bar
+    with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
+        for subdomain in subdomains:
+            # Run the httpx command for each subdomain (adjust as necessary)
+            try:
+                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 5 -t 200 -rl 500 -rlm 6000"
+                output = run_command(command)
+                if output:
+                    live_subdomains.add(subdomain)
+                pbar.update(1)
+            except subprocess.CalledProcessError as e:
+                print(f"Error running httpx for {subdomain}: {e}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout running httpx for {subdomain}: {e}")
+    
+    # After all subdomains are checked
+    print(f"Live subdomains saved to {output_file}")
+    
+    # Save results to the output file
+    with open(output_file, 'w') as file:
+        for subdomain in live_subdomains:
+            file.write(f"{subdomain}\n")
+    
+    return live_subdomains
+
+
+def run_tool(tool, command, output_folder, domain):
     """Run a specific tool and process its output."""
     global total_subdomains
     print(f"Running {tool}...")
     try:
         run_command(command, timeout=1800)  # Set a 30-minute timeout for each tool
-        if tool == "dnsenum":
-            result = parse_dnsenum_output(os.path.join(output_folder, 'dnsenum.txt'))
-        else:
-            with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
-                result = [line.strip() for line in file]
+        with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
+            result = [line.strip() for line in file]
         total_subdomains.update(result)
-        print(f"{tool} finished - Subdomains found: {len(total_subdomains)}")
+        print(f"{tool} finished - Total Subdomains: {len(total_subdomains)}")
         return result
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
@@ -96,25 +133,7 @@ def run_tool(tool, command, output_folder):
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
         return []
-
-def parse_dnsenum_output(filename):
-    """Parse the dnsenum output file to extract brute-forced subdomains."""
-    subdomains = set()
-    try:
-        with open(filename, 'r') as file:
-            lines = file.readlines()
-            in_brute_force_section = False
-            for line in lines:
-                if "Brute forcing with" in line:
-                    in_brute_force_section = True
-                    continue
-                if in_brute_force_section:
-                    if line.strip() and not line.startswith("___"):  # Skip headers and empty lines
-                        subdomain = line.strip()
-                        subdomains.add(subdomain)
-    except FileNotFoundError:
-        print(f"File {filename} not found.")
-    return subdomains
+        
 
 def main(domain):
     start_time = time.time()
@@ -124,38 +143,44 @@ def main(domain):
     os.makedirs(output_folder, exist_ok=True)
     
     check_and_install_tools()
-    #download_subdomains_list(output_folder)
+    # download_subdomains_list(output_folder)
 
     # Define the tools and their commands
     tools = {
+        #"dnsenum": f"dnsenum {domain} --noreverse -p 0 -s 0 -f discovery-wordlist.txt --dnsserver 1.1.1.1 --subfile {os.path.join(output_folder, 'dnsenum.txt')} > {os.path.join(output_folder, 'dnssubs.txt')}",
         "sublist3r": f"sublist3r -d {domain} -o {os.path.join(output_folder, 'sublist3r.txt')}",
         "amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder.txt')}",
         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain.txt')}",
-        "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder.txt')}",
-        
+        "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder.txt')}"
     }
 
     print("Discovering Subdomains...")
 
     # Run each tool sequentially and collect the results
     for tool, command in tools.items():
-        result = run_tool(tool, command, output_folder)
+        result = run_tool(tool, command, output_folder, domain)
         total_subdomains.update(result)
 
     # Save results to a single text file
-    with open(os.path.join(output_folder, "subdomains.txt"), "w") as outfile:
+    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
+    with open(all_subdomains_file, "w") as outfile:
         for subdomain in sorted(total_subdomains):
             outfile.write(subdomain + "\n")
+    
+    # Check live subdomains using httpx
+    live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
+    live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)
 
     end_time = time.time()
     runtime = end_time - start_time
 
-    print(f"Total unique subdomains found: {len(total_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
-    print(f"Subdomain enumeration complete. Results saved to {os.path.join(output_folder, 'subdomains.txt')}.")
+    print(f"Total unique live subdomains found: {len(live_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
+    print(f"Subdomain enumeration complete. Results saved to {live_subdomains_file}.")
 
     # Clean up temporary files
-    os.remove(os.path.join(output_folder, "subdomains-top-1million.txt"))
+    #os.remove("discovery-wordlist.txt")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Subdomain enumeration script")
