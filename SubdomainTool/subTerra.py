@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import subprocess
 import os
 import argparse
@@ -6,6 +8,16 @@ import time
 import re
 import signal
 from tqdm import tqdm 
+
+print("""
+             _                                 
+           | |     _                          
+  ___ _   _| |__ _| |_ _____  ____ ____ _____ 
+ /___) | | |  _ (_   _) ___ |/ ___) ___|____ |
+|___ | |_| | |_) )| |_| ____| |  | |   / ___ |
+(___/|____/|____/  \__)_____)_|  |_|   \_____|
+                                             
+""")
 
 total_subdomains = set()
 
@@ -95,7 +107,7 @@ def check_live_subdomains(subdomains_file, output_file):
         for subdomain in subdomains:
             # Run the httpx command for each subdomain (adjust as necessary)
             try:
-                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 5 -t 200 -rl 500 -rlm 6000"
+                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 2 -t 300 -rl 1000 -rlm 10000"
                 output = run_command(command)
                 if output:
                     live_subdomains.add(subdomain)
@@ -121,7 +133,7 @@ def run_tool(tool, command, output_folder, domain):
     global total_subdomains
     print(f"Running {tool}...")
     try:
-        run_command(command, timeout=1800)  # Set a 30-minute timeout for each tool
+        run_command(command, timeout=21100)  # Set a 30-minute timeout for each tool
         with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
             result = [line.strip() for line in file]
         total_subdomains.update(result)
@@ -147,7 +159,6 @@ def main(domain):
 
     # Define the tools and their commands
     tools = {
-        #"dnsenum": f"dnsenum {domain} --noreverse -p 0 -s 0 -f discovery-wordlist.txt --dnsserver 1.1.1.1 --subfile {os.path.join(output_folder, 'dnsenum.txt')} > {os.path.join(output_folder, 'dnssubs.txt')}",
         "sublist3r": f"sublist3r -d {domain} -o {os.path.join(output_folder, 'sublist3r.txt')}",
         "amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder.txt')}",
@@ -175,11 +186,9 @@ def main(domain):
     end_time = time.time()
     runtime = end_time - start_time
 
+    # Print the results
     print(f"Total unique live subdomains found: {len(live_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
     print(f"Subdomain enumeration complete. Results saved to {live_subdomains_file}.")
-
-    # Clean up temporary files
-    #os.remove("discovery-wordlist.txt")
 
 
 if __name__ == "__main__":
