@@ -3,8 +3,10 @@ import subprocess
 import sys
 import time
 import argparse
+from tqdm import tqdm  # Import tqdm for progress bar
 
 total_subdomains = set()
+total_permutations = 0  # Initialize total permutations counter
 
 def run_command(command, env=None, timeout=300):
     """Run a shell command."""
@@ -57,71 +59,8 @@ def is_valid_domain(domain):
         return False
     return True
 
-def generate_patterns(subdomain_file, patterns_file, domain):
-    print("Generating patterns from discovered subdomains...")
-    valid_patterns = set()
-    common_words = ['admin', 'test', 'dev', 'prod', 'stage', 'qa', 'demo', 'beta', 'internal']
-    with open(subdomain_file, 'r') as sf:
-        for subdomain in sf:
-            subdomain = subdomain.strip()
-            if is_valid_domain(subdomain):
-                parts = subdomain.split('.')
-                if len(parts) > 1:
-                    prefix = parts[0]
-                    suffix = domain
-                    valid_patterns.add(f"{prefix}.{suffix}")
-                    valid_patterns.add(f"{prefix}-{suffix}")
-                    valid_patterns.add(f"{prefix}{suffix}")
-                    for word in common_words:
-                        valid_patterns.add(f"{word}.{suffix}")
-                        valid_patterns.add(f"{prefix}-{word}.{suffix}")
-                        valid_patterns.add(f"{word}-{prefix}.{suffix}")
-
-    predefined_patterns = [
-        f"{{{{number}}}}-{{{{sub}}}}.{domain}",
-        f"{{{{number}}}}{{{{word}}}}.{domain}",
-        f"{{{{region}}}}-{{{{sub}}}}-{{{{word}}}}.{domain}",
-        f"{{{{region}}}}-{{{{sub}}}}.{domain}",
-        f"{{{{region}}}}.{{{{sub}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{number}}}}-{{{{word}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{number}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{region}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{word}}}}-{{{{number}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{word}}}}-{{{{region}}}}.{domain}",
-        f"{{{{sub}}}}-{{{{word}}}}.{domain}",
-        f"{{{{sub}}}}.{{{{word}}}}.{domain}",
-        f"{{{{sub}}}}{{{{number}}}}.{domain}",
-        f"{{{{sub}}}}{{{{word}}}}.{domain}",
-        f"{{{{word}}}}-{{{{number}}}}.{domain}",
-        f"{{{{word}}}}-{{{{sub}}}}-{{{{number}}}}.{domain}",
-        f"{{{{word}}}}-{{{{sub}}}}.{domain}",
-        f"{{{{word}}}}.{{{{sub}}}}-{{{{number}}}}.{domain}",
-        f"{{{{word}}}}.{{{{sub}}}}.{domain}",
-        f"{{{{word}}}}{{{{number}}}}.{domain}"
-    ]
-
-    valid_patterns.update(predefined_patterns)
-
-    # Patterns to exclude
-    patterns_to_exclude = {
-        f"{{{{number}}}}{{{{word}}}}.{domain}",
-        f"{{{{region}}}}.{{{{sub}}}}.{domain}",
-        f"{{{{sub}}}}.{{{{word}}}}.{domain}",
-        f"{{{{sub}}}}{{{{number}}}}.{domain}",
-        f"{{{{sub}}}}{{{{word}}}}.{domain}",
-        f"{{{{word}}}}.{{{{sub}}}}.{domain}",
-        f"{{{{word}}}}{{{{number}}}}.{domain}"
-    }
-
-    valid_patterns = {pattern for pattern in valid_patterns if is_valid_domain(pattern.replace("{{sub}}", "example").replace("{{word}}", "example").replace("{{number}}", "123").replace("{{region}}", "us")) and pattern not in patterns_to_exclude}
-
-    with open(patterns_file, 'w') as pf:
-        for pattern in sorted(valid_patterns):
-            pf.write(f"{pattern}\n")
-    print(f"Patterns generated and saved to {patterns_file}")
-
 def run_tool(tool, command):
-    global total_subdomains
+    global total_subdomains, total_permutations
     print(f"Running {tool}...")
     try:
         run_command(command, timeout=1800)  # Set a 30-minute timeout for each tool
@@ -129,24 +68,48 @@ def run_tool(tool, command):
         with open(permutations_file, 'r') as file:
             result = [line.strip() for line in file]
         total_subdomains.update(result)
-        print(f"{tool} finished - Permutations found: {len(total_subdomains)}")
+        total_permutations += len(result)  # Update total permutations
+        print(f"{tool} finished - Permutations found: {len(result)}")
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
 
 def check_live_subdomains(subdomains_file, output_file):
-    """Check which subdomains are live using httpx."""
+    """Check which subdomains are live using httpx with a progress bar."""
     print("Checking which subdomains are live...")
-    try:
-        run_command(f"httpx -l {subdomains_file} -o {output_file} --silent")
-        print(f"Live subdomains saved to {output_file}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error running httpx: {e}")
+    
+    # Read the subdomains from file
+    with open(subdomains_file, 'r') as file:
+        subdomains = [line.strip() for line in file]
+    
+    total_count = len(subdomains)
+    
+    # Create a progress bar
+    with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
+        for subdomain in subdomains:
+            # Run the httpx command for each subdomain (adjust as necessary)
+            try:
+                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 5 -t 200 -rl 500 -rlm 6000"
+                run_command(command)
+                pbar.update(1)
+            except subprocess.CalledProcessError as e:
+                print(f"Error running httpx for {subdomain}: {e}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout running httpx for {subdomain}: {e}")
+    
+    # After all subdomains are checked
+    print(f"Live subdomains saved to {output_file}")
+    
+    # Optionally save results to the output file
+    with open(output_file, 'w') as file:
+        # Assuming the results are already in `total_subdomains` (adapt as necessary)
+        for subdomain in total_subdomains:
+            file.write(f"{subdomain}\n")
 
 def count_lines(file_path):
     return int(subprocess.check_output(['wc', '-l', file_path]).split()[0])
-    
+
 def main(domain):
     start_time = time.time()
     print(f"Discovery initiated for: {domain}")
@@ -154,15 +117,13 @@ def main(domain):
     output_folder = os.path.abspath(f"results/{domain}")
     os.makedirs(output_folder, exist_ok=True)
     subdomain_file = os.path.abspath(f"SubdomainTool/results/{domain}/subdomains.txt")
-    patterns_file = os.path.abspath(f"{output_folder}/patterns.txt")
+    patterns_file = os.path.abspath("patterns.txt")  # Use the correct patterns file
 
     check_and_install_tools()
 
     if not os.path.exists(subdomain_file):
         print(f"No subdomain file found at {subdomain_file}")
         return
-
-    generate_patterns(subdomain_file, patterns_file, domain)
     
     subdomain_count = count_lines(subdomain_file)
     pattern_count = count_lines(patterns_file)
@@ -170,11 +131,11 @@ def main(domain):
     print(f"Number of patterns: {pattern_count}")
 
     tools = {
-                "alterx": f"alterx -l {subdomain_file} -p {patterns_file} -o {output_folder}/alterx_permutations.txt",
-        "gotator": f"gotator -sub {subdomain_file} -perm {patterns_file} -depth 1 -numbers 5 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
-        "altdns": f"altdns -i {subdomain_file} -o {output_folder}/altdns_permutations.txt -w {patterns_file}",
-        "dnsgen": f"dnsgen -f {subdomain_file} -w {patterns_file} > {output_folder}/dnsgen_permutations.txt",
-        "ripgen": f"ripgen {subdomain_file} {patterns_file} > {output_folder}/ripgen_permutations.txt",
+        "alterx": f"alterx -l {subdomain_file} -p {patterns_file} -ms 100 -o {output_folder}/alterx_permutations.txt",
+        "gotator": f"gotator -sub {subdomain_file} -perm {patterns_file} -fast -depth 1 -numbers 1 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
+        #"altdns": f"altdns -i {subdomain_file} -o {output_folder}/altdns_permutations.txt -w wordlist.txt",
+        "dnsgen": f"dnsgen -f {subdomain_file} > {output_folder}/dnsgen_permutations.txt",
+        "ripgen": f"ripgen -d {subdomain_file} > {output_folder}/ripgen_permutations.txt",
         "lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {subdomain_file}"
     }
 
@@ -199,6 +160,7 @@ def main(domain):
     runtime = end_time - start_time
 
     print(f"Total unique live subdomains found: {len(total_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
+    print(f"Total permutations found: {total_permutations}")  # Print total permutations found
     print(f"Subdomain enumeration complete. Results saved to {output_folder}.")
 
 if __name__ == "__main__":
