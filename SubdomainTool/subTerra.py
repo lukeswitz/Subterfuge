@@ -29,10 +29,12 @@ def install_golang():
         os.environ["PATH"] += os.pathsep + "/usr/local/go/bin"
 
 def install_tool(tool_name, install_command, env=None):
-    """Install a specific tool."""
+    """Install a specific tool if it is not already installed."""
     try:
         run_command(f"which {tool_name}", env=env)
+        print(f"{tool_name} is already installed.")
     except subprocess.CalledProcessError:
+        print(f"{tool_name} is not installed. Installing now...")
         run_command(install_command, env=env)
 
 def check_and_install_tools():
@@ -73,25 +75,10 @@ def download_subdomains_list(output_folder):
     except Exception as e:
         print(f"Error downloading subdomains list: {e}")
 
-def create_resolvers_file(output_folder):
-    """Create a resolvers file."""
-    resolvers = [
-        "8.8.8.8",
-        "8.8.4.4",
-        "1.1.1.1",
-        "1.0.0.1",
-        "9.9.9.9",
-        "208.67.222.222",
-        "208.67.220.220"
-    ]
-
-    file_path = os.path.join(output_folder, "resolvers.txt")
-    with open(file_path, "w") as file:
-        for resolver in resolvers:
-            file.write(resolver + "\n")
 
 def run_tool(tool, command, output_folder):
     """Run a specific tool and process its output."""
+    global total_subdomains
     print(f"Running {tool}...")
     try:
         run_command(command, timeout=1800)  # Set a 30-minute timeout for each tool
@@ -101,7 +88,7 @@ def run_tool(tool, command, output_folder):
             with open(os.path.join(output_folder, f"{tool}.txt"), 'r') as file:
                 result = [line.strip() for line in file]
         total_subdomains.update(result)
-        print(f"{tool} finished - Subdomains found: {len(result)}")
+        print(f"{tool} finished - Subdomains found: {len(total_subdomains)}")
         return result
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
@@ -137,8 +124,7 @@ def main(domain):
     os.makedirs(output_folder, exist_ok=True)
     
     check_and_install_tools()
-    download_subdomains_list(output_folder)
-    create_resolvers_file(output_folder)
+    #download_subdomains_list(output_folder)
 
     # Define the tools and their commands
     tools = {
@@ -147,7 +133,7 @@ def main(domain):
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder.txt')}",
         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain.txt')}",
         "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder.txt')}",
-        "dnsenum": f"dnsenum {domain} -f {os.path.join(output_folder, 'subdomains-top-1million.txt')} --subfile {os.path.join(output_folder, 'dnsenum.txt')}"
+        
     }
 
     print("Discovering Subdomains...")
@@ -170,7 +156,6 @@ def main(domain):
 
     # Clean up temporary files
     os.remove(os.path.join(output_folder, "subdomains-top-1million.txt"))
-    os.remove(os.path.join(output_folder, "resolvers.txt"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Subdomain enumeration script")
