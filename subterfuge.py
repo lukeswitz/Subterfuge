@@ -104,7 +104,7 @@ def check_live_subdomains(subdomains_file, output_file):
         for subdomain in subdomains:
             # Run the httpx command for each subdomain (adjust as necessary)
             try:
-                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 2 -t 300 -rl 1000 -rlm 10000"
+                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 6 -t 100 -rl 300 -rlm 7000"
                 run_command(command)
                 pbar.update(1)
             except subprocess.CalledProcessError as e:
@@ -155,7 +155,7 @@ def main(domain):
         "gotator": f"gotator -sub {file_to_use} -perm {patterns_file} -fast -depth 1 -numbers 1 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
         "dnsgen": f"dnsgen -f {file_to_use} > {output_folder}/dnsgen_permutations.txt",
         "ripgen": f"ripgen -d {file_to_use} > {output_folder}/ripgen_permutations.txt",
-        "lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {file_to_use}"
+        #"lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {file_to_use}"
     }
 
     for tool, command in tools.items():
