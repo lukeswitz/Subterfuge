@@ -4,7 +4,7 @@ _**A comprehensive toolset for subdomain discovery and permutation generation to
 ## Workflow
 
 1. **Subdomain Discovery**:
-    - `subTerra.py` discovers subdomains using a deep set of tooling.
+    - The included `subTerra.py` [tool](https://github.com/lukeswitz/Subterfuge/blob/main/SubdomainTool/) discovers subdomains using a deep set of tooling.
     - Discovered subdomains are saved in a text file in their respective folders.
 
 2. **Permutation Generation and Validation**:
