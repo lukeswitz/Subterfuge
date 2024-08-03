@@ -92,7 +92,7 @@ def run_tool(tool, command):
             result = [line.strip() for line in file]
         total_subdomains.update(result)
         total_permutations += len(result)  # Update total permutations
-        print(f"{tool} finished - Permutations found: {len(result)}")
+        print(f"{tool} finished - Total Permutations: {total_permutations}")
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
     except subprocess.TimeoutExpired as e:
