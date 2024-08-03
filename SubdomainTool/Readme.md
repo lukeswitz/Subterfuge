@@ -1,11 +1,13 @@
-# Subterfuge Subdomain Finder
+# SubTerra 
+Powerful Subdomain Enumeration:
 
-Discover hidden subdomains using multiple advanced tools and compile them into a single file. Each is checked to be alive using httpx. A final list is stored in a folder for use with Subterfuge.
+- Discover hidden subdomains using multiple advanced tools and compile them into a single file.
+- Each is checked to be alive using httpx.
+- A final list is stored in a folder for use with Subterfuge.
 
 ## Prerequisites
 
-Ensure the following tools are installed on your system:
-- **Golang**: Required for installing Go-based tools.
+- **Golang**: Subterra will install this and all other necessary tools if they are not found on the system. 
 
 ## Usage
 
@@ -59,7 +61,9 @@ Checking which subdomains are live...
 Checking subdomains:  19%|███████▊                                | 237/1219 [04:56<15:40,  1.04subdomain/s]
 ```
 
-- The script will save the discovered subdomains in the results/$DOMAIN/subdomains.txt file to be used with Subterfuge.
+- The script will create a folder for the target.
+- Discovered subdomains will be saved in the results/example.com/ folder to be used with Subterfuge, etc.
+- The resulting `subdomains.txt` combined output will be checked for live status codes using httpx and saved to `live_subdomains.txt`
 
 ## Tools Used
 
