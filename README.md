@@ -1,16 +1,5 @@
-```
-              8        o                d'b                      
-              8        8                8                        
-.oPYo. o    o 8oPYo.  o8P .oPYo. oPYo. o8P  o    o .oPYo. .oPYo. 
-Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8 
-  'Yb. 8    8 8    8   8  8.     8      8   8    8 8    8 8.     
-`YooP' `YooP' `YooP'   8  `Yooo' 8      8   `YooP' `YooP8 `Yooo' 
-:.....::.....::.....:::..::.....:..:::::..:::.....::....8 :.....:
-:::::::::::::::::::::::::::::::::::::::::::::::::::::ooP'.:::::::
-:::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
-```
-
-**A comprehensive tool for subdomain discovery and permutation generation.**__
+# Subterfuge
+_**A comprehensive toolset for subdomain discovery and permutation generation. Find esoteric subdomains.**___
 
 > [!IMPORTANT]  
 > Subdomain discovery is **needed in the subdomains.txt file** if you don't use the included subdomain finder tool. More QOL features soon, such as specifying the location and more.
@@ -25,7 +14,6 @@ Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8
 ```
 
 ## Workflow
-
 
 1. **Subdomain Discovery**:
     - `subTerra.py` discovers subdomains using a deep set of tooling.
@@ -54,7 +42,7 @@ Both scripts will automatically install necessary tools if not already installed
 - **AltDNS**: Generates permutations, alterations, and mutations.
 - **DnsGen**: Generates permutations from a wordlist.
 - **Ripgen**: Generates permutations from subdomains.
-- **Lepus**: Uses a Markov chain model for permutations.
+- Disabled: **Lepus**: Uses a Markov chain model for permutations.
 - **PureDNS**: Resolves subdomains.
 - **Httpx**: Checks live subdomains.
 
