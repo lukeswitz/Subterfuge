@@ -70,7 +70,7 @@ Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8
 :::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
 
 Discovery initiated for: glassdoor.com
-Using live_subdomains_file: /home/dev/Subterfuge/SubdomainTool/results/glassdoor.com/live_subdomains.txt
+Using live_subdomains_file: /SubdomainTool/results/glassdoor.com/live_subdomains.txt
 Number of subdomains: 110
 Number of patterns: 12
 Running alterx...
