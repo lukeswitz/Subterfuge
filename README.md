@@ -25,7 +25,7 @@ _**Permutated enumeration for elucidating esoteric subdomains**_
 
 ## Usage
 
-> [!IMPORTANT]  
+> [!NOTE]  
 > A subdomain list is **needed in the subdomains.txt file**
 > If you don't use the included subdomain finder tool.
 ```
@@ -85,12 +85,13 @@ Checking which subdomains are live...
 Checking subdomains:   0%|                  | 470/1962183 [03:14<201:58:21,  2.70subdomain/s]
 ```
 
-> [!WARNING]  
-> Generated lists of permutations can be large and take a long time.
+> [!IMPORTANT]  
+> Generated lists of permutations can be large and httpx csn take a long time.
+> Disabling httpx will be a feature soon, for now you can exit the tool and use the combined list in the results folder. 
 
 > [!TIP]  
-> Disabling alterx or using less patterns will lower the count.
-> You can also tone this down by changing flags from the script commands or simply commenting out their use in the main function.
+> Disabling tools or using less patterns with gotator and alterx will lower the amount of possible subdomains. 
+> You can also tone this down by changing flags in the script commands or commenting out their use in the main function. Or, add your own commands to the list & mod as needed. 
 
 
 ## Contributing
