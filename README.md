@@ -53,7 +53,7 @@ Both scripts will automatically install necessary tools if not already installed
 - **amass**: 
 - **assetfinder**
 - **findomain**
-- **dnsenum**
+- Removed: **dnsenum**
 
 ### Permutation and Validation
 - **AlterX**: Subdomain permutation generator.
