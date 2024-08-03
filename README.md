@@ -1,37 +1,6 @@
 # Subterfuge
 _**A comprehensive toolset for subdomain discovery and permutation generation to find esoteric subdomains.**_
 
-
-
-> [!IMPORTANT]  
-> A subdomain list is **needed in the subdomains.txt file**
-> If you don't use the included subdomain finder tool.
-```
-├── LICENSE
-├── patterns.txt
-├── README.md
-├── results
-│   └── glassdoor.com
-│       ├── all_permutations.txt
-│       ├── alterx_permutations.txt
-│       ├── dnsgen_permutations.txt
-│       ├── gotator_permutations.txt
-│       └── ripgen_permutations.txt
-├── SubdomainTool
-│   ├── results
-│   │   └── glassdoor.com
-│   │       ├── amass.txt
-│   │       ├── assetfinder.txt
-│   │       ├── findomain.txt
-│   │       ├── live_subdomains.txt
-│   │       ├── subdomains.txt  <---- add if needed
-│   │       ├── subfinder.txt
-│   │       └── sublist3r.txt
-│   └── subTerra.py
-├── subterfuge.py
-
-```
-
 ## Workflow
 
 1. **Subdomain Discovery**:
@@ -41,31 +10,33 @@ _**A comprehensive toolset for subdomain discovery and permutation generation to
 2. **Permutation Generation and Validation**:
     - `subterfuge.py` generates patterns and uses them with permutation tools listed below. They are checked with httpx to ensure live domains are saved as the final output.
 
-## Installation
-
-Both scripts will automatically install necessary tools if not already installed:
-
 ## Tools
 
-### Discovery
-- **subfinder**
-- **sublist3r**
-- **amass**: 
-- **assetfinder**
-- **findomain**
-- Removed: **dnsenum**
-
 ### Permutation and Validation
-- **AlterX**: Subdomain permutation generator.
-- **Gotator**: Generates permutations and combinations.
-- **AltDNS**: Generates permutations, alterations, and mutations.
-- **DnsGen**: Generates permutations from a wordlist.
-- **Ripgen**: Generates permutations from subdomains.
-- Disabled: **Lepus**: Uses a Markov chain model for permutations.
-- **PureDNS**: Resolves subdomains.
-- **Httpx**: Checks live subdomains.
+- **AlterX**
+- **Gotator**
+- **AltDNS**
+- **DnsGen**
+- **Ripgen**
+- WIP: **Lepus**
+- **PureDNS**
+- **Httpx**
 
 ## Usage
+
+> [!IMPORTANT]  
+> A subdomain list is **needed in the subdomains.txt file**
+> If you don't use the included subdomain finder tool.
+```
+├── SubdomainTool
+│   ├── results
+│   │   └── example.com
+│   │       ├── live_subdomains.txt
+│   │       ├── subdomains.txt  <---- add if needed
+│   └── subTerra.py
+├── subterfuge.py
+
+```
 
 ### Step 1: Discover Subdomains
 
@@ -75,10 +46,6 @@ cd SubdomainTool
 chmod +x subTerra.py
 python3 subTerra.py example.com
 ```
-
-> [!WARNING]  
-> Generated lists of permutations can be large, into the GB's.
-> You can tone this down by simply removing some flags from the script commands.
 
 ### Step 2: Generate Permutations and Check Validity
 
@@ -91,15 +58,35 @@ chmod +x subterfuge.py
 
 Example Output:
 ```
-Discovery initiated for: tesla.com
-Generating patterns from discovered subdomains...
-Patterns generated and saved to /home/dev/Subterfuge/results/tesla.com/patterns.txt
-Number of subdomains: 2770
-Number of patterns: 612
+              8        o                d'b                      
+              8        8                8                        
+.oPYo. o    o 8oPYo.  o8P .oPYo. oPYo. o8P  o    o .oPYo. .oPYo. 
+Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8 
+  'Yb. 8    8 8    8   8  8.     8      8   8    8 8    8 8.     
+`YooP' `YooP' `YooP'   8  `Yooo' 8      8   `YooP' `YooP8 `Yooo' 
+:.....::.....::.....:::..::.....:..:::::..:::.....::....8 :.....:
+:::::::::::::::::::::::::::::::::::::::::::::::::::::ooP'.:::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
+
+Discovery initiated for: glassdoor.com
+Using live_subdomains_file: /home/dev/Subterfuge/SubdomainTool/results/glassdoor.com/live_subdomains.txt
+Number of subdomains: 110
+Number of patterns: 12
 Running alterx...
-alterx finished - Permutations found: 612
+alterx finished - Total Permutations: 1777651
 Running gotator...
+gotator finished - Total Permutations: 1880364
+Running dnsgen...
+dnsgen finished - Total Permutations: 1889889
+Running ripgen...
+ripgen finished - Total Permutations: 1962183
+Checking which subdomains are live...
+Checking subdomains:   0%|                  | 470/1962183 [03:14<201:58:21,  2.70subdomain/s]
 ```
+
+> [!WARNING]  
+> Generated lists of permutations can be large, into the GB's.
+> You can tone this down by simply removing some flags from the script commands.
 
 
 ## Contributing
