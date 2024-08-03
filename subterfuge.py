@@ -166,7 +166,7 @@ def main(domain):
     print(f"Number of patterns: {pattern_count}")
 
     tools = {
-        "alterx": f"alterx -l {file_to_use} -p {patterns_file} -ms 100 -o {output_folder}/alterx_permutations.txt",
+        "alterx": f"alterx -l {file_to_use} -p {patterns_file} -ms 15 -o {output_folder}/alterx_permutations.txt",
         "gotator": f"gotator -sub {file_to_use} -perm {patterns_file} -fast -depth 1 -numbers 1 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
         "dnsgen": f"dnsgen -f {file_to_use} > {output_folder}/dnsgen_permutations.txt",
         "ripgen": f"ripgen -d {file_to_use} > {output_folder}/ripgen_permutations.txt",
