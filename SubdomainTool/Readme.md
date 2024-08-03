@@ -1,8 +1,7 @@
 # SubTerra 
 Powerful Subdomain Enumeration:
 
-- Discover hidden subdomains using multiple advanced tools and compile them into a single file.
-- Each is checked to be alive using httpx.
+- Each valid subdomain is checked for life using httpx.
 - A final list is stored in a folder for use with Subterfuge.
 
 ## Prerequisites
