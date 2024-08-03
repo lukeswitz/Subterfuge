@@ -14,13 +14,23 @@ Run the Script with a Domain:
 ```bash
 python3 subterfuge_finder.py example.com
 ```
-### Disable httpx check
+
+> [!NOTE]  
+> Turn off live domain check or enable amass:
+
+#### 1. Disable httpx check
 Comment out the line around `170` as shown:
 
 ` # live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)`
 
+
+#### 2. Enable amass:
+Remove the `#` around line 180 for the amss command to enable it. Amass takes a lot of time and API use if configured.
+
+`   # "amass": f"amass....`
+
 ## Sample Output
-(with amass disabled)
+Shown with amass disabled, as it is by default. 
 ```
            _                                 
            | |     _                          
