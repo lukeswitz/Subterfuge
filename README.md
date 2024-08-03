@@ -1,5 +1,5 @@
 # Subterfuge
-_**A comprehensive toolset for subdomain discovery and permutation generation. Find esoteric subdomains.**___
+_**A comprehensive toolset for subdomain discovery and permutation generation to find esoteric subdomains.**_
 
 
 
