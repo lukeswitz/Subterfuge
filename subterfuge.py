@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import re
+import idna
 import os
 import subprocess
 import sys
@@ -63,15 +65,22 @@ def check_and_install_tools():
         install_tool(tool, install_command, env=env)
 
 def is_valid_domain(domain):
-    """Check if the domain is valid."""
+    """Validate if the domain is in a proper format."""
     if not domain:
         return False
-    parts = domain.split('.')
-    if len(parts) < 2:
+    try:
+        # Convert the domain to Punycode
+        punycode_domain = idna.encode(domain).decode('ascii')
+    except idna.IDNAError:
         return False
-    if not all(part.isalnum() or part == '-' for part in parts):
-        return False
-    return True
+    
+    regex = re.compile(
+        r'^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)'  # Subs and hosts
+        r'(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*'           # Additional subdomains
+        r'\.[A-Za-z]{2,}$'                             # TLDs
+    )
+    return re.match(regex, punycode_domain) is not None
+    
 
 def run_tool(tool, command):
     global total_subdomains, total_permutations
@@ -128,12 +137,13 @@ def main(domain):
     start_time = time.time()
     print(f"Discovery initiated for: {domain}")
 
-    output_folder = os.path.abspath(f"results/{domain}")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    output_folder = os.path.join(base_dir, f"results/{domain}")
     os.makedirs(output_folder, exist_ok=True)
     
-    subdomain_file = os.path.abspath(f"SubdomainTool/results/{domain}/subdomains.txt")
-    live_subdomains_file = os.path.abspath(f"SubdomainTool/results/{domain}/live_subdomains.txt")
-    patterns_file = os.path.abspath("patterns.txt")  # Corrected path to the root level
+    subdomain_file = os.path.join(base_dir, f"SubdomainTool/results/{domain}/subdomains.txt")
+    live_subdomains_file = os.path.join(base_dir, f"SubdomainTool/results/{domain}/live_subdomains.txt")
+    patterns_file = os.path.join(base_dir, "patterns.txt")  # Corrected path to the root level
 
     check_and_install_tools()
 
@@ -142,8 +152,13 @@ def main(domain):
         print(f"No subdomain file found at {subdomain_file} or {live_subdomains_file}")
         return
     
-    # Use the appropriate file for subdomain processing
-    file_to_use = subdomain_file if os.path.exists(subdomain_file) else live_subdomains_file
+    # Use the appropriate file for subdomain processing, prioritize live_subdomains_file
+    if os.path.exists(live_subdomains_file):
+        file_to_use = live_subdomains_file
+        print(f"Using live_subdomains_file: {live_subdomains_file}")
+    else:
+        file_to_use = subdomain_file
+        print(f"Using subdomain_file: {subdomain_file}")
 
     subdomain_count = count_lines(file_to_use)
     pattern_count = count_lines(patterns_file)
@@ -162,7 +177,7 @@ def main(domain):
         run_tool(tool, command)
 
     # Combine all permutations into one file
-    all_permutations_file = os.path.abspath(f"{output_folder}/all_permutations.txt")
+    all_permutations_file = os.path.join(output_folder, "all_permutations.txt")
     with open(all_permutations_file, 'w') as outfile:
         for tool, _ in tools.items():
             permutations_file = os.path.join(output_folder, f"{tool}_permutations.txt")
@@ -172,7 +187,7 @@ def main(domain):
                         outfile.write(line)
 
     # Check live subdomains using httpx
-    live_subdomains_file = os.path.abspath(f"{output_folder}/live_subdomains.txt")
+    live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
     check_live_subdomains(all_permutations_file, live_subdomains_file)
 
     end_time = time.time()
@@ -182,6 +197,7 @@ def main(domain):
     print(f"Total unique live subdomains found: {len(total_subdomains)}.\nRuntime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
     print(f"Total permutations found: {total_permutations}")  # Print total permutations found
     print(f"Subdomain enumeration complete. Results saved to {output_folder}.")
+
 
 
 if __name__ == "__main__":
