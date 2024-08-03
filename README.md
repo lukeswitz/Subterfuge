@@ -86,7 +86,10 @@ Checking subdomains:   0%|                  | 470/1962183 [03:14<201:58:21,  2.7
 ```
 
 > [!WARNING]  
-> Generated lists of permutations can be large and take a long time. Disabling alterx or using less patterns will lower the count.
+> Generated lists of permutations can be large and take a long time.
+
+> [!TIP]  
+> Disabling alterx or using less patterns will lower the count.
 > You can also tone this down by changing flags from the script commands or simply commenting out their use in the main function.
 
 
