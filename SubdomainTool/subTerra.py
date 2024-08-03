@@ -6,11 +6,11 @@ import argparse
 import urllib.request
 import time
 import re
-import signal
-from tqdm import tqdm 
+from tqdm import tqdm
+import shutil
 
 print("""
-             _                                 
+            _                                 
            | |     _                          
   ___ _   _| |__ _| |_ _____  ____ ____ _____ 
  /___) | | |  _ (_   _) ___ |/ ___) ___|____ |
@@ -22,8 +22,11 @@ print("""
 total_subdomains = set()
 
 def run_command(command, env=None, timeout=300):
-    """Run a shell command."""
-    result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True, env=env, timeout=timeout)
+    """Run a shell command and capture output."""
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, env=env, timeout=timeout)
+    if result.returncode != 0:
+        print(f"Error running command: {result.stderr}")
+        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
     return result.stdout.strip()
 
 def get_go_path():
@@ -40,8 +43,8 @@ def install_golang():
         run_command("go version")
     except subprocess.CalledProcessError:
         run_command("wget https://golang.org/dl/go1.16.5.linux-amd64.tar.gz")
-        run_command("sudo tar -C /usr/local -xzf go1.16.5.linux-amd64.tar.gz")
-        os.environ["PATH"] += os.pathsep + "/usr/local/go/bin"
+        run_command("tar -C $HOME -xzf go1.16.5.linux-amd64.tar.gz")
+        os.environ["PATH"] += os.pathsep + os.path.expanduser("~/go/bin")
 
 def install_tool(tool_name, install_command, env=None):
     """Install a specific tool if it is not already installed."""
@@ -65,25 +68,33 @@ def check_and_install_tools():
     tools_install_commands = {
         "sublist3r": (
             "git clone https://github.com/aboul3la/Sublist3r.git && "
-            "cd Sublist3r && pip install -r requirements.txt && sudo python setup.py install"
+            "cd Sublist3r && pip install -r requirements.txt && python setup.py install --user"
         ),
-        "amass": "sudo apt-get install amass -y",
+        "amass": "sudo apt-get install amass -y",  # amass needs sudo
         "assetfinder": "go install github.com/tomnomnom/assetfinder@latest",
         "findomain": (
             "curl -LO https://github.com/Findomain/Findomain/releases/latest/download/findomain-linux.zip && "
-            "unzip -o findomain-linux.zip && chmod +x findomain && sudo mv findomain /usr/bin/findomain"
+            "unzip -o findomain-linux.zip && chmod +x findomain && mv findomain ~/.local/bin/findomain"
         ),
-        "subfinder": "sudo apt install subfinder -y",
-        "dnsenum": "sudo apt-get install dnsenum -y"
+        "subfinder": "sudo apt install subfinder -y",  # subfinder needs sudo
+        "dnsenum": "sudo apt-get install dnsenum -y"  # dnsenum needs sudo
     }
 
     for tool, install_command in tools_install_commands.items():
         install_tool(tool, install_command, env=env)
 
+def create_directory(path):
+    """Create a directory if it does not exist, with appropriate permissions."""
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+        print(f"Directory {path} created.")
+    else:
+        print(f"Directory {path} already exists.")
+
 def download_subdomains_list(output_folder):
     """Download the list of subdomains."""
     url = "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-110000.txt"
-    file_path = "discovery-wordlist.txt"
+    file_path = os.path.join(output_folder, "discovery-wordlist.txt")
     print(f"Downloading {url} to {file_path}")
     try:
         urllib.request.urlretrieve(url, file_path)
@@ -133,7 +144,7 @@ def check_live_subdomains(subdomains_file, output_file):
         for subdomain in subdomains:
             # Run the httpx command for each subdomain (adjust as necessary)
             try:
-                command = f"httpx -u {subdomain} -sc -silent -fc 404 -timeout 2 -t 300 -rl 1000 -rlm 10000"
+                command = f"httpx -u {subdomain} -sc -silent -fc 404"
                 output = run_command(command)
                 if output:
                     live_subdomains.add(subdomain)
@@ -153,21 +164,19 @@ def check_live_subdomains(subdomains_file, output_file):
     
     return live_subdomains
 
-
 def main(domain):
     start_time = time.time()
     print(f"Discovery initiated for: {domain}")
 
     output_folder = os.path.join("results", domain)
-    os.makedirs(output_folder, exist_ok=True)
+    create_directory(output_folder)
     
     check_and_install_tools()
-    # download_subdomains_list(output_folder)
 
     # Define the tools and their commands
     tools = {
         "sublist3r": f"sublist3r -d {domain} -o {os.path.join(output_folder, 'sublist3r.txt')}",
-        "amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
+        #"amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder.txt')}",
         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain.txt')}",
         "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder.txt')}"
@@ -180,15 +189,19 @@ def main(domain):
         result = run_tool(tool, command, output_folder, domain)
         total_subdomains.update(result)
 
-    # Save results to a single text file
-    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
-    with open(all_subdomains_file, "w") as outfile:
+    # Save results to a single text file in the temporary directory
+    all_subdomains_file_temp = os.path.join(output_folder, "subdomains.txt")
+    with open(all_subdomains_file_temp, "w") as outfile:
         for subdomain in sorted(total_subdomains):
             outfile.write(subdomain + "\n")
-    
+
     # Check live subdomains using httpx
+    live_subdomains_file_temp = os.path.join(output_folder, "live_subdomains.txt")
+    live_subdomains = check_live_subdomains(all_subdomains_file_temp, live_subdomains_file_temp)
+
+    # Move the results to the final output directory using sudo
+    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
     live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
-    live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)
 
     end_time = time.time()
     runtime = end_time - start_time
@@ -204,3 +217,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.domain)
+
