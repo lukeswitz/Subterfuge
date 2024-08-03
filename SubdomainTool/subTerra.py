@@ -8,6 +8,7 @@ import time
 import re
 from tqdm import tqdm
 import shutil
+import idna
 
 print("""
             _                                 
@@ -103,12 +104,18 @@ def download_subdomains_list(output_folder):
 
 def is_valid_domain(domain):
     """Validate if the domain is in a proper format."""
+    try:
+        # Convert the domain to Punycode
+        punycode_domain = idna.encode(domain).decode('ascii')
+    except idna.IDNAError:
+        return False
+    
     regex = re.compile(
-        r'^(?:[a-zA-Z0-9]' # First character of the domain
-        r'(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)' # Sub domain + hostname
-        r'+[a-zA-Z]{2,6}$' # First level TLD
+        r'^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)'  # Subs and hosts
+        r'(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*'           # Additional subdomains
+        r'\.[A-Za-z]{2,}$'                             # TLDs
     )
-    return re.match(regex, domain) is not None
+    return re.match(regex, punycode_domain) is not None
 
 def run_tool(tool, command, output_folder, domain):
     """Run a specific tool and process its output."""
@@ -168,7 +175,8 @@ def main(domain):
     start_time = time.time()
     print(f"Discovery initiated for: {domain}")
 
-    output_folder = os.path.join("results", domain)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    output_folder = os.path.join(base_dir, f"results/{domain}")
     create_directory(output_folder)
     
     check_and_install_tools()
@@ -176,7 +184,7 @@ def main(domain):
     # Define the tools and their commands
     tools = {
         "sublist3r": f"sublist3r -d {domain} -o {os.path.join(output_folder, 'sublist3r.txt')}",
-        #"amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
+        # "amass": f"amass enum -d {domain} -o {os.path.join(output_folder, 'amass.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder.txt')}",
         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain.txt')}",
         "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder.txt')}"
@@ -189,19 +197,15 @@ def main(domain):
         result = run_tool(tool, command, output_folder, domain)
         total_subdomains.update(result)
 
-    # Save results to a single text file in the temporary directory
-    all_subdomains_file_temp = os.path.join(output_folder, "subdomains.txt")
-    with open(all_subdomains_file_temp, "w") as outfile:
+    # Save results to a single text file in the output directory
+    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
+    with open(all_subdomains_file, "w") as outfile:
         for subdomain in sorted(total_subdomains):
             outfile.write(subdomain + "\n")
 
     # Check live subdomains using httpx
-    live_subdomains_file_temp = os.path.join(output_folder, "live_subdomains.txt")
-    live_subdomains = check_live_subdomains(all_subdomains_file_temp, live_subdomains_file_temp)
-
-    # Move the results to the final output directory using sudo
-    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
     live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
+    live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)
 
     end_time = time.time()
     runtime = end_time - start_time
@@ -210,11 +214,9 @@ def main(domain):
     print(f"Total unique live subdomains found: {len(live_subdomains)}. Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
     print(f"Subdomain enumeration complete. Results saved to {live_subdomains_file}.")
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Subdomain enumeration script")
     parser.add_argument("domain", help="The domain to enumerate subdomains for")
     args = parser.parse_args()
 
     main(args.domain)
-
