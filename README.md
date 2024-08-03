@@ -1,5 +1,6 @@
-# Subterfuge
-_**A comprehensive toolset for subdomain discovery and permutation generation to find esoteric subdomains.**_
+![image](https://github.com/user-attachments/assets/82544040-a80a-4ceb-8b04-0a3cbda5a0c1)
+
+_**Permutated enumeration for elucidating esoteric subdomains.**_
 
 ## Workflow
 
