@@ -1,16 +1,35 @@
 # Subterfuge
 _**A comprehensive toolset for subdomain discovery and permutation generation. Find esoteric subdomains.**___
 
+
+
 > [!IMPORTANT]  
-> Subdomain discovery is **needed in the subdomains.txt file** if you don't use the included subdomain finder tool. More QOL features soon, such as specifying the location and more.
+> A subdomain list is **needed in the subdomains.txt file**
+> If you don't use the included subdomain finder tool.
 ```
+├── LICENSE
+├── patterns.txt
 ├── README.md
+├── results
+│   └── glassdoor.com
+│       ├── all_permutations.txt
+│       ├── alterx_permutations.txt
+│       ├── dnsgen_permutations.txt
+│       ├── gotator_permutations.txt
+│       └── ripgen_permutations.txt
 ├── SubdomainTool
 │   ├── results
-│   │   └── tesla.com
-│   │       ├── subdomains.txt
+│   │   └── glassdoor.com
+│   │       ├── amass.txt
+│   │       ├── assetfinder.txt
+│   │       ├── findomain.txt
+│   │       ├── live_subdomains.txt
+│   │       ├── subdomains.txt  <---- add if needed
+│   │       ├── subfinder.txt
+│   │       └── sublist3r.txt
 │   └── subTerra.py
 ├── subterfuge.py
+
 ```
 
 ## Workflow
