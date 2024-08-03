@@ -1,6 +1,6 @@
-![image](https://github.com/user-attachments/assets/82544040-a80a-4ceb-8b04-0a3cbda5a0c1)
+<img src="https://github.com/user-attachments/assets/82544040-a80a-4ceb-8b04-0a3cbda5a0c1" height="200">
 
-_**Permutated enumeration for elucidating esoteric subdomains.**_
+_**Permutated enumeration for elucidating esoteric subdomains**_
 
 ## Workflow
 
@@ -86,8 +86,8 @@ Checking subdomains:   0%|                  | 470/1962183 [03:14<201:58:21,  2.7
 ```
 
 > [!WARNING]  
-> Generated lists of permutations can be large, into the GB's.
-> You can tone this down by simply removing some flags from the script commands.
+> Generated lists of permutations can be large and take a long time. Disabling alterx or using less patterns will lower the count.
+> You can also tone this down by changing flags from the script commands or simply commenting out their use in the main function.
 
 
 ## Contributing
