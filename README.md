@@ -57,7 +57,8 @@ chmod +x subterfuge.py
 ./subterfuge.py example.com
 ```
 
-Example Output:
+### Example Output
+(Using only ripgen)
 ```
               8        o                d'b                      
               8        8                8                        
@@ -70,19 +71,16 @@ Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8
 :::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
 
 Discovery initiated for: glassdoor.com
-Using live_subdomains_file: /SubdomainTool/results/glassdoor.com/live_subdomains.txt
-Number of subdomains: 110
+Using subdomain_file: /home/dev/Subterfuge/SubdomainTool/results/glassdoor.com/subdomains.txt
+Number of subdomains: 64
 Number of patterns: 12
-Running alterx...
-alterx finished - Total Permutations: 1777651
-Running gotator...
-gotator finished - Total Permutations: 1880364
-Running dnsgen...
-dnsgen finished - Total Permutations: 1889889
 Running ripgen...
-ripgen finished - Total Permutations: 1962183
+ripgen finished - Total Permutations: 26253
 Checking which subdomains are live...
-Checking subdomains:   0%|                  | 470/1962183 [03:14<201:58:21,  2.70subdomain/s]
+Checking subdomains: 100%|████████████████████| 26253/26253 [4:39:47<00:00,  1.56subdomain/s]
+Live subdomains saved to /results/glassdoor.com/live_subdomains.txt      
+Total unique live subdomains found: 16005.                                                   
+Runtime: 4:39:48 (hh:mm:ss).                                                                                                                           
 ```
 
 > [!IMPORTANT]  
