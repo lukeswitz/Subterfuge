@@ -71,7 +71,7 @@ Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8
 :::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
 
 Discovery initiated for: glassdoor.com
-Using subdomain_file: /home/dev/Subterfuge/SubdomainTool/results/glassdoor.com/subdomains.txt
+Using subdomain_file: /results/glassdoor.com/subdomains.txt
 Number of subdomains: 64
 Number of patterns: 12
 Running ripgen...
