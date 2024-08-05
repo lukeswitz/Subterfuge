@@ -11,18 +11,18 @@ _**Permutated enumeration for elucidating esoteric subdomains**_
 2. **Permutation Generation and Validation**:
     - `subterfuge.py` generates patterns and uses them with permutation tools listed below. They are checked with httpx to ensure live domains are saved as the final output.
 
-## Tools
+## Tool Options
 
 ### Permutation and Validation
 - **AlterX**
 - **Gotator**
 - **AltDNS**
-- **DnsGen**
 - **Ripgen**
-- WIP: **Lepus**
 - **PureDNS**
 - **Httpx**
-
+- - WIP: **Lepus**
+- WIP:**DnsGen**
+- 
 ## Usage
 
 > [!NOTE]  
