@@ -119,65 +119,80 @@ def is_valid_domain(domain):
     return re.match(regex, punycode_domain) is not None
 
 def run_tool(tool, command, output_folder, domain):
-    """Run a specific tool and process its output."""
     global total_subdomains
     print(f"Running {tool}...")
     temp_file = os.path.join(output_folder, f"{tool}_temp.txt")
+    temp_file_run = os.path.join(output_folder, f"{tool}_run_temp.txt")
+    valid_temp_file = f"{temp_file}_valid"
     final_file = os.path.join(output_folder, f"{tool}.txt")
+
+    # Define file paths
+    temp_file = os.path.join(output_folder, f"{tool}_temp.txt")
+    temp_file_run = os.path.join(output_folder, f"{tool}_run_temp.txt")
+    valid_temp_file = f"{temp_file}_valid"
+    final_file = os.path.join(output_folder, f"{tool}.txt")
+
+    all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
+    live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
+
+    # Ensure that the required files exist
+    ensure_file_exists(temp_file)
+    ensure_file_exists(temp_file_run)
+    ensure_file_exists(valid_temp_file)
+    ensure_file_exists(final_file)
+    ensure_file_exists(all_subdomains_file)
+    ensure_file_exists(live_subdomains_file)
+    
 
     try:
         # Run the command and direct output to a temporary file
         run_command(f"{command} > {temp_file}", timeout=900)
 
+        # Filter valid subdomains from the temp file
+        with open(temp_file, 'r') as infile, open(valid_temp_file, 'w') as outfile:
+            for line in infile:
+                subdomain = line.strip()
+                if is_valid_domain(subdomain):
+                    outfile.write(subdomain + '\n')
+
         # Ensure the final file exists before appending
         if not os.path.exists(final_file):
             open(final_file, 'a').close()
 
-        # Count total subdomains found by the tool
-        total_subdomains_found = len(open(temp_file).readlines())
-
         # Count existing entries in the final file before appending
         existing_entries_before = len(open(final_file).readlines())
 
-        # Use anew to append unique entries
-        run_command(f"cat {temp_file} | anew {final_file}", timeout=900)
+        # Append unique subdomains to the final file using anew and count new entries
+        result = run_command(f"cat {valid_temp_file} | anew {final_file}", timeout=900)
+        new_subdomains = result.splitlines()
+        new_count = len(new_subdomains)
 
-        # Count entries in the final file after appending
-        existing_entries_after = len(open(final_file).readlines())
-
-        # Calculate the number of new entries
-        new_count = existing_entries_after - existing_entries_before
-
-        print(f"{tool} finished - Total Subdomains Found: {total_subdomains_found}, New: {new_count}")
+        # Read valid subdomains from the valid_temp_file
+        with open(valid_temp_file, 'r') as file:
+            new_subdomains = set(file.read().splitlines())
 
         # Update total_subdomains with new subdomains
-        if new_count > 0:
-            with open(temp_file, 'r') as file:
-                new_subdomains = file.read().splitlines()
-            total_subdomains.update(new_subdomains)
-        else:
-            # Read existing subdomains if no new ones were found
-            with open(final_file, 'r') as file:
-                existing_subdomains = file.read().splitlines()
-            total_subdomains.update(existing_subdomains)
+        total_subdomains.update(new_subdomains)
 
+        print(f"{tool} finished - Total Subdomains Found: {len(new_subdomains)}, New: {new_count}")
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
     finally:
         if os.path.exists(temp_file):
-            os.remove(temp_file)  # Clean up temporary file
+            os.remove(temp_file)
+        if os.path.exists(valid_temp_file):
+            os.remove(valid_temp_file)
+        if os.path.exists(temp_file_run):
+            os.remove(temp_file_run)
+
+
 
 def check_live_subdomains(subdomains_file, output_file):
-    """Check which subdomains are live using httpx with a progress bar."""
     print("Checking which subdomains are live...")
 
     temp_live_file = f"{output_file}.temp"
-
-    # Ensure the final file exists before appending
-    if not os.path.exists(output_file):
-        open(output_file, 'a').close()
 
     # Read the subdomains from file
     with open(subdomains_file, 'r') as file:
@@ -186,11 +201,14 @@ def check_live_subdomains(subdomains_file, output_file):
     total_count = len(subdomains)
     live_subdomains = set()
 
-    # Create a progress bar
+    if total_count == 0:
+        print("No subdomains to check.")
+        return live_subdomains
+
     with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
         for subdomain in subdomains:
             try:
-                command = f"httpx -silent -mc 200,302,301 -t 300 -timeout 5 -delay 200ms -u {subdomain}"
+                command = f"httpx -silent -mc 200 -u {subdomain}"
                 result = subprocess.run(command, shell=True, capture_output=True, text=True)
                 if result.returncode == 0:
                     live_subdomains.add(subdomain)
@@ -200,22 +218,19 @@ def check_live_subdomains(subdomains_file, output_file):
             except subprocess.TimeoutExpired as e:
                 print(f"Timeout running httpx for {subdomain}: {e}")
 
-    # Print the number of live subdomains found
     live_count = len(live_subdomains)
-    # print(f"Live Subdomains Found: {live_count}")
+    print(f"Live Subdomains Found: {live_count}")
 
     if live_subdomains:
         with open(temp_live_file, 'w') as file:
             for subdomain in live_subdomains:
                 file.write(f"{subdomain}\n")
 
-        # Append unique live subdomains to the final output file
-        subprocess.run(f"cat {temp_live_file} | anew {output_file}", shell=True)
+        # Append unique live subdomains to the final file using anew and suppress the output
+        subprocess.run(f"cat {temp_live_file} | anew {output_file} > /dev/null 2>&1", shell=True)
 
         if os.path.exists(temp_live_file):
-            os.remove(temp_live_file)  # Clean up temporary file
-    else:
-        print(f"Live Subdomains Found: {live_count}")
+            os.remove(temp_live_file)
 
     return live_subdomains
 
@@ -230,6 +245,11 @@ def remove_temp_files(temp_files):
             print(f"Temporary file not found, tool may have errored.")
 
 
+def ensure_file_exists(file_path):
+    if not os.path.isfile(file_path):
+        open(file_path, 'w').close()
+
+
 def main(domain):
     start_time = time.time()
     print(f"Discovery initiated for: {domain}\n")
@@ -242,11 +262,12 @@ def main(domain):
 
     # Define the tools and their commands with temporary files
     tools = {
-    	"sublist3r": f"sublist3r -n -d {domain} -o {os.path.join(output_folder, 'sublist3r_temp.txt')}",
-        "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -norecursive -o {os.path.join(output_folder, 'amass_temp.txt')}",
+        # "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -norecursive -o {os.path.join(output_folder, 'amass_temp.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder_temp.txt')}",
-        "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain_temp.txt')}",
-        "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder_temp.txt')}"
+         "sublist3r": f"sublist3r -n -d {domain} -o {os.path.join(output_folder, 'sublist3r_temp.txt')}",
+         "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -o amass_run_temp.txt && grep -oP '([a-zA-Z0-9]+\.)+{domain}' {os.path.join(output_folder, 'amass_run_temp.txt')} | sort -u > {os.path.join(output_folder, 'amass_temp.txt')}",
+         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain_temp.txt')}",
+         "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder_temp.txt')}"
     }
 
     print("Discovering Subdomains...")
@@ -255,13 +276,19 @@ def main(domain):
     for tool, command in tools.items():
         run_tool(tool, command, output_folder, domain)
 
+    cumulative_total_subdomains = len(total_subdomains)
+    print(f"Total Subdomains Found by All Tools: {cumulative_total_subdomains}")
+
     # Save results to a single text file in the output directory
     all_subdomains_file = os.path.join(output_folder, "subdomains.txt")
-    with open(all_subdomains_file, "w") as outfile:
-        for subdomain in sorted(total_subdomains):
-            outfile.write(subdomain + "\n")
+    if total_subdomains:
+        with open(all_subdomains_file, "w") as outfile:
+            for subdomain in sorted(total_subdomains):
+                outfile.write(subdomain + "\n")
+    else:
+        print(f"No new subdomains found by any tool.")
 
-    # Check live subdomains using httpxf
+    # Check live subdomains using httpx
     live_subdomains_file = os.path.join(output_folder, "live_subdomains.txt")
     live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)
 
@@ -269,8 +296,10 @@ def main(domain):
     runtime = end_time - start_time
 
     # Print the results
-    print(f"Total unique live subdomains found: {len(live_subdomains)}.\nRuntime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
+    total_live_count = len(live_subdomains)
+    print(f"Total unique live subdomains found: {total_live_count}.\nRuntime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
     print(f"Subdomain enumeration complete. Results saved to {live_subdomains_file}.")
+
 
 
 if __name__ == "__main__":
