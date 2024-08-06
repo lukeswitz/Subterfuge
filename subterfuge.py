@@ -108,22 +108,25 @@ def run_tool(tool, command):
 def check_live_subdomains(subdomains_file, output_file):
     """Check which subdomains are live using httpx with a progress bar."""
     print("Validating subdomains...")
-    
+
     # Read the subdomains from file
     with open(subdomains_file, 'r') as file:
-        subdomains = {line.strip() for line in file}  # Using a set to ensure uniqueness
-    
+        subdomains = [line.strip() for line in file if is_valid_domain(line.strip())]
+
     total_count = len(subdomains)
-    
-    # Create a progress bar
+
+    if total_count == 0:
+        print("No subdomains to check.")
+        return set()
+
+    live_subdomains = set()
+
     with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
-        live_subdomains = set()
         for subdomain in subdomains:
-            # Run the httpx command for each subdomain (adjust as necessary)
+            command = f"httpx -silent -mc 200 -u {subdomain}"
             try:
-                command = f"httpx -u {subdomain} -silent -mc 200"
-                result = run_command(command)
-                if result:
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                if result.stdout:
                     live_subdomains.add(subdomain)
                 pbar.update(1)
             except subprocess.CalledProcessError as e:
@@ -131,14 +134,17 @@ def check_live_subdomains(subdomains_file, output_file):
             except subprocess.TimeoutExpired as e:
                 print(f"Timeout running httpx for {subdomain}: {e}")
 
+    # Read previously saved live subdomains
     previous_live_subdomains = set()
     if os.path.exists(output_file):
         with open(output_file, 'r') as file:
             previous_live_subdomains = {line.strip() for line in file}
 
+    # Determine new live subdomains
     new_live_subdomains = live_subdomains - previous_live_subdomains
     new_count = len(new_live_subdomains)
-    
+
+    # Append new live subdomains to the output file
     with open(output_file, 'a') as file:
         for subdomain in new_live_subdomains:
             file.write(f"{subdomain}\n")
@@ -146,9 +152,7 @@ def check_live_subdomains(subdomains_file, output_file):
     print(f"{new_count} new live subdomains added.")
     print(f"Live subdomains saved to {output_file}")
 
-    # Update total_subdomains with live_subdomains
-    global total_subdomains
-    total_subdomains.update(live_subdomains)
+    return live_subdomains
 
 
 def count_lines(file_path):
@@ -187,8 +191,8 @@ def main(domain):
     print(f"Number of patterns: {pattern_count}")
 
     tools = {
-        "alterx": f"alterx -l {file_to_use} -p {patterns_file} -ms 15 -o {output_folder}/alterx_permutations.txt",
-        "gotator": f"gotator -sub {file_to_use} -perm {patterns_file} -depth 0 -numbers 0 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
+        #"alterx": f"alterx -l {file_to_use} -p {patterns_file} -ms 15 -o {output_folder}/alterx_permutations.txt",
+        #"gotator": f"gotator -sub {file_to_use} -perm {patterns_file} -depth 0 -numbers 0 -mindup -adv -md > {output_folder}/gotator_permutations.txt",
         "dnsgen": f"dnsgen {file_to_use} > {output_folder}/dnsgen_permutations.txt",
         #"ripgen": f"ripgen -d {file_to_use} > {output_folder}/ripgen_permutations.txt",
         #"lepus": f"lepus.py --permutate -pw {patterns_file} -o {output_folder}/lepus_permutations.txt {file_to_use}"
