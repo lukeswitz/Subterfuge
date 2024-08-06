@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import concurrent.futures
 import subprocess
 import os
 import argparse
@@ -189,18 +188,13 @@ def run_tool(tool, command, output_folder, domain):
             os.remove(temp_file_run)
 
 
-def run_httpx(subdomain):
-    """Function to run httpx for a single subdomain"""
-    command = f"echo {subdomain} | httpx -silent -mc 200"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return subdomain if result.returncode == 0 and result.stdout.strip() else None
 
-def check_live_subdomains(subdomains_file, output_file, max_workers=10):
+def check_live_subdomains(subdomains_file, output_file):
     print("Checking which subdomains are live...")
 
     temp_live_file = f"{output_file}.temp"
 
-    # Read the subdomains from the file
+    # Read the subdomains from file
     with open(subdomains_file, 'r') as file:
         subdomains = [line.strip() for line in file if is_valid_domain(line.strip())]
 
@@ -212,18 +206,17 @@ def check_live_subdomains(subdomains_file, output_file, max_workers=10):
         return live_subdomains
 
     with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_subdomain = {executor.submit(run_httpx, subdomain): subdomain for subdomain in subdomains}
-            for future in concurrent.futures.as_completed(future_to_subdomain):
-                subdomain = future_to_subdomain[future]
-                try:
-                    result = future.result()
-                    if result:
-                        live_subdomains.add(result)
-                except Exception as exc:
-                    print(f"{subdomain} generated an exception: {exc}")
-                finally:
-                    pbar.update(1)
+        for subdomain in subdomains:
+            try:
+                command = f"httpx -silent -mc 200 -u {subdomain}"
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                if result.returncode == 0:
+                    live_subdomains.add(subdomain)
+                pbar.update(1)
+            except subprocess.CalledProcessError as e:
+                print(f"Error running httpx for {subdomain}: {e.stderr}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout running httpx for {subdomain}: {e}")
 
     live_count = len(live_subdomains)
     print(f"Live Subdomains Found: {live_count}")
@@ -240,6 +233,7 @@ def check_live_subdomains(subdomains_file, output_file, max_workers=10):
             os.remove(temp_live_file)
 
     return live_subdomains
+
 
 
 def remove_temp_files(temp_files):
@@ -270,10 +264,10 @@ def main(domain):
     tools = {
         # "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -norecursive -o {os.path.join(output_folder, 'amass_temp.txt')}",
         "assetfinder": f"assetfinder --subs-only {domain} > {os.path.join(output_folder, 'assetfinder_temp.txt')}",
-        # "sublist3r": f"sublist3r -n -d {domain} -o {os.path.join(output_folder, 'sublist3r_temp.txt')}",
-        # "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -o amass_run_temp.txt && grep -oP '([a-zA-Z0-9]+\.)+{domain}' {os.path.join(output_folder, 'amass_run_temp.txt')} | sort -u > {os.path.join(output_folder, 'amass_temp.txt')}",
-         #"findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain_temp.txt')}",
-         #"subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder_temp.txt')}"
+         "sublist3r": f"sublist3r -n -d {domain} -o {os.path.join(output_folder, 'sublist3r_temp.txt')}",
+         "amass": f"amass enum -d {domain} -r 8.8.8.8,1.1.1.1,9.9.9.9 -o amass_run_temp.txt && grep -oP '([a-zA-Z0-9]+\.)+{domain}' {os.path.join(output_folder, 'amass_run_temp.txt')} | sort -u > {os.path.join(output_folder, 'amass_temp.txt')}",
+         "findomain": f"findomain -t {domain} -u {os.path.join(output_folder, 'findomain_temp.txt')}",
+         "subfinder": f"subfinder -d {domain} -o {os.path.join(output_folder, 'subfinder_temp.txt')}"
     }
 
     print("Discovering Subdomains...")
