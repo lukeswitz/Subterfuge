@@ -1,8 +1,8 @@
 # SubTerra 
 Powerful Subdomain Enumeration:
 
-- Each valid subdomain is checked for life using httpx.
-- A final list is stored in a folder for use with Subterfuge.
+- Each valid subdomain is checked for life using concurrent httpx tasks.
+- A final list is stored in a folder for use with Subterfuge, along with a `live_subdomains.txt`. 
 
 ## Prerequisites
 
@@ -25,13 +25,13 @@ Comment out the line around `170` as shown:
 ` # live_subdomains = check_live_subdomains(all_subdomains_file, live_subdomains_file)`
 
 
-#### 2. Enable amass:
-Remove the `#` around line 180 for the amss command to enable it. Amass takes a lot of time and API use if configured.
+#### 2. Toggle tools:
+Remove the `#` around line 180 for the amss command for example to enable it. Amass takes a lot of time and API use if configured.
 
 `   # "amass": f"amass....`
 
 ## Sample Output
-Shown with amass disabled, as it is by default. 
+Shown without amass, change to suit.
 ```
            _                                 
            | |     _                          
@@ -57,7 +57,7 @@ findomain finished - Total Subdomains: 713
 Running subfinder...
 subfinder finished - Total Subdomains: 1219
 Checking which subdomains are live...
-Checking subdomains:  19%|███████▊                                | 237/1219 [04:56<15:40,  1.04subdomain/s]
+Checking subdomains:  19%|███████▊                                | 237/1219 [04:56<15:40,  2.04subdomain/s]
 ```
 
 - The script will create a folder for the target.
@@ -72,6 +72,7 @@ Checking subdomains:  19%|███████▊                              
 - **Subfinder**
 - **Sublist3r**
 - **httpx**
+- WIP:**DnsGen**
 
 ## Contributing
 
