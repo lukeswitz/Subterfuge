@@ -8,7 +8,6 @@ import sys
 import time
 import argparse
 from tqdm import tqdm  # Import tqdm for progress bar
-import concurrent.futures
 
 print("""
               8        o                d'b                      
@@ -104,41 +103,33 @@ def run_tool(tool, command):
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
 
-def run_httpx(subdomain):
-    """Function to run httpx for a single subdomain"""
-    command = f"echo {subdomain} | httpx -silent -mc 200"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return subdomain if result.returncode == 0 and result.stdout.strip() else None
 
-def check_live_subdomains(subdomains_file, output_file, max_workers=10):
+
+def check_live_subdomains(subdomains_file, output_file):
     """Check which subdomains are live using httpx with a progress bar."""
     print("Validating subdomains...")
-
+    
     # Read the subdomains from file
     with open(subdomains_file, 'r') as file:
-        subdomains = [line.strip() for line in file if is_valid_domain(line.strip())]
-
+        subdomains = {line.strip() for line in file}  # Using a set to ensure uniqueness
+    
     total_count = len(subdomains)
-    live_subdomains = set()
-
-    if total_count == 0:
-        print("No subdomains to check.")
-        return live_subdomains
-
+    
     # Create a progress bar
     with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_subdomain = {executor.submit(run_httpx, subdomain): subdomain for subdomain in subdomains}
-            for future in concurrent.futures.as_completed(future_to_subdomain):
-                subdomain = future_to_subdomain[future]
-                try:
-                    result = future.result()
-                    if result:
-                        live_subdomains.add(result)
-                except Exception as exc:
-                    print(f"{subdomain} generated an exception: {exc}")
-                finally:
-                    pbar.update(1)
+        live_subdomains = set()
+        for subdomain in subdomains:
+            # Run the httpx command for each subdomain (adjust as necessary)
+            try:
+                command = f"httpx -u {subdomain} -silent -mc 200"
+                result = run_command(command)
+                if result:
+                    live_subdomains.add(subdomain)
+                pbar.update(1)
+            except subprocess.CalledProcessError as e:
+                print(f"Error running httpx for {subdomain}: {e}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout running httpx for {subdomain}: {e}")
 
     previous_live_subdomains = set()
     if os.path.exists(output_file):
@@ -147,7 +138,7 @@ def check_live_subdomains(subdomains_file, output_file, max_workers=10):
 
     new_live_subdomains = live_subdomains - previous_live_subdomains
     new_count = len(new_live_subdomains)
-
+    
     with open(output_file, 'a') as file:
         for subdomain in new_live_subdomains:
             file.write(f"{subdomain}\n")
@@ -158,8 +149,6 @@ def check_live_subdomains(subdomains_file, output_file, max_workers=10):
     # Update total_subdomains with live_subdomains
     global total_subdomains
     total_subdomains.update(live_subdomains)
-
-    return live_subdomains
 
 
 def count_lines(file_path):
