@@ -20,9 +20,8 @@ _**Permutated enumeration for elucidating esoteric subdomains**_
 - **Ripgen**
 - **PureDNS**
 - **Httpx**
-- - WIP: **Lepus**
-- WIP:**DnsGen**
-- 
+- WIP: **Lepus**
+
 ## Usage
 
 > [!NOTE]  
