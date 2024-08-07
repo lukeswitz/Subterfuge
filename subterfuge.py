@@ -81,7 +81,6 @@ def is_valid_domain(domain):
     )
     return re.match(regex, punycode_domain) is not None
     
-
 def run_tool(tool, command):
     global total_subdomains, total_permutations
     print(f"Running {tool}...")
@@ -103,68 +102,58 @@ def run_tool(tool, command):
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
 
-
-def check_live_subdomains(subdomains_file, output_file, chunk_size=100):
+def check_live_subdomains(subdomains_file, output_file):
     """Check which subdomains are live using httpx with a progress bar."""
-    print("")
-    try:
-        # Read subdomains from the file
-        with open(subdomains_file, 'r') as file:
-            subdomains = [line.strip() for line in file if is_valid_domain(line.strip())]
+    global total_subdomains  # Ensure we're using the global set
 
-        total_count = len(subdomains)
-        if total_count == 0:
-            print("No subdomains to check.")
-            return set()
+    
 
-        live_subdomains = set()
-        temp_output_file = output_file + ".temp"
+    # Read the subdomains from file
+    with open(subdomains_file, 'r') as file:
+        subdomains = {line.strip() for line in file if is_valid_domain(line.strip())}
 
-        # Check subdomains in chunks
-        with tqdm(total=len(total_subdomains), desc="Analyzing subdomains", unit="subdomain") as pbar:  # Use total_permutations
-            for i in range(0, total_count, chunk_size):
-                chunk = subdomains[i:i + chunk_size]
-                chunk_file = f"{subdomains_file}.chunk"
-                
-                # Write the chunk to a temporary file
-                with open(chunk_file, 'w') as chunk_f:
-                    chunk_f.write('\n'.join(chunk) + '\n')
-
-                # Execute httpx command with -l and -o options for the chunk
-                command = f"httpx -silent -fc 404 -l {chunk_file} -o {temp_output_file}"
-                result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=900)
-
-                if result.returncode != 0:
-                    print(f"Error running httpx: {result.stderr}")
-                    continue
-
-                # Read the live subdomains from the temp output file
-                with open(temp_output_file, 'r') as temp_f:
-                    for line in temp_f:
-                        stripped_subdomain = re.sub(r'^https?://', '', line.strip())
-                        live_subdomains.add(stripped_subdomain)
-
-                pbar.update(len(chunk))
-
-                # Clean up temporary chunk file
-                os.remove(chunk_file)
-
-        # Write the live subdomains to the output file
-        with open(output_file, 'w') as file:
-            for subdomain in live_subdomains:
-                file.write(f"{subdomain}\n")
-
-        print(f"\n[*] Total of {len(live_subdomains)} live subdomains.")
-        print(f"Live subdomains saved to {output_file}")
-
-        return live_subdomains
-
-    except subprocess.CalledProcessError as e:
-        print(f"Error running httpx: {e}")
+    total_count = len(subdomains)
+    
+    print(f"Validating {total_count} permutations...")
+    
+    if total_count == 0:
+        print("No subdomains to check.")
         return set()
-    except subprocess.TimeoutExpired as e:
-        print(f"Timeout running httpx: {e}")
-        return set()
+
+    live_subdomains = set()
+
+    with tqdm(total=total_count, desc="Checking subdomains", unit="subdomain") as pbar:
+        for subdomain in subdomains:
+            command = f"httpx -silent -mc 200 -t 300 -u {subdomain}"
+            try:
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                if result.stdout.strip():  # Ensure non-empty response
+                    live_subdomains.add(subdomain)
+                pbar.update(1)
+            except subprocess.CalledProcessError as e:
+                print(f"Error running httpx for {subdomain}: {e}")
+            except subprocess.TimeoutExpired as e:
+                print(f"Timeout running httpx for {subdomain}: {e}")
+
+    # Read previously saved live subdomains
+    previous_live_subdomains = set()
+    if os.path.exists(output_file):
+        with open(output_file, 'r') as file:
+            previous_live_subdomains = {line.strip() for line in file if line.strip()}
+
+    # Determine new live subdomains
+    new_live_subdomains = live_subdomains - previous_live_subdomains
+    new_count = len(new_live_subdomains)
+
+    # Append new live subdomains to the output file
+    with open(output_file, 'a') as file:
+        for subdomain in new_live_subdomains:
+            file.write(f"{subdomain}\n")
+
+    print(f"{new_count} new live subdomains added.")
+    print(f"Live subdomains saved to {output_file}")
+
+    return live_subdomains
 
 
 def count_lines(file_path):
