@@ -356,9 +356,7 @@ def main(domain):
     # Print the results
     total_live_count = len(live_subdomains)
     print(f"Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
-    print(f"\n[+]  Results saved to {live_subdomains_file}.")
-
-
+   
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Subdomain enumeration script")
