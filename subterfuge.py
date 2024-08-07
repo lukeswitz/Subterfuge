@@ -96,14 +96,12 @@ def run_tool(tool, command):
         new_subdomains = result - total_subdomains
         new_count = len(new_subdomains)
         total_subdomains.update(new_subdomains)
-        total_permutations += new_count  # Update total permutations correctly
+        total_permutations = len(total_subdomains)
         print(f"{tool} finished - {new_count} new permutations added - Total Permutations: {total_permutations}")
     except subprocess.CalledProcessError as e:
         print(f"Error running {tool}: {e}")
     except subprocess.TimeoutExpired as e:
         print(f"Timeout running {tool}: {e}")
-
-
 
 
 def check_live_subdomains(subdomains_file, output_file, chunk_size=100):
@@ -123,7 +121,7 @@ def check_live_subdomains(subdomains_file, output_file, chunk_size=100):
         temp_output_file = output_file + ".temp"
 
         # Check subdomains in chunks
-        with tqdm(total=total_permutations, desc="Analyzing subdomains", unit="subdomain") as pbar:
+        with tqdm(total=total_count, desc="Analyzing subdomains", unit="subdomain") as pbar:  # Use total_permutations
             for i in range(0, total_count, chunk_size):
                 chunk = subdomains[i:i + chunk_size]
                 chunk_file = f"{subdomains_file}.chunk"
@@ -232,6 +230,9 @@ def main(domain):
     end_time = time.time()
     runtime = end_time - start_time
     
+    # Print the results
+    total_live_count = len(open(live_subdomains_file).readlines())  # Line to print live subdomains count
+    print(f"\n[+] Total Live Subdomains: {total_live_count}")
     print(f"Runtime: {int(runtime // 3600)}:{int((runtime % 3600) // 60)}:{int(runtime % 60)} (hh:mm:ss).")
 
 
