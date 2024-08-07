@@ -121,7 +121,7 @@ def check_live_subdomains(subdomains_file, output_file, chunk_size=100):
         temp_output_file = output_file + ".temp"
 
         # Check subdomains in chunks
-        with tqdm(total=total_count, desc="Analyzing subdomains", unit="subdomain") as pbar:  # Use total_permutations
+        with tqdm(total=len(total_subdomains), desc="Analyzing subdomains", unit="subdomain") as pbar:  # Use total_permutations
             for i in range(0, total_count, chunk_size):
                 chunk = subdomains[i:i + chunk_size]
                 chunk_file = f"{subdomains_file}.chunk"
