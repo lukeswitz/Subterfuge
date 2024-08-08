@@ -1,17 +1,22 @@
 <img src="https://github.com/user-attachments/assets/82544040-a80a-4ceb-8b04-0a3cbda5a0c1" height="200">
 
-_**Permutated enumeration for elucidating esoteric subdomains**_
+**Discover > Enumerate > Permutate**
+ _...elucidating esoteric subdomains_
 
 ## Workflow
 
 1. **Subdomain Discovery**:
     - The included `subTerra.py` [tool](https://github.com/lukeswitz/Subterfuge/blob/main/SubdomainTool/) discovers subdomains using a deep set of tooling.
-    - Discovered subdomains are saved in a text file in their respective folders.
+   
+     - Discovered subdomains are saved in a text file as well as the verified & live file.
+    - Rerunning the tool adds anything new to the existing files. 
 
 2. **Permutation Generation and Validation**:
-    - `subterfuge.py` generates patterns and uses them with permutation tools listed below. They are checked with httpx to ensure live domains are saved as the final output.
+    - `subterfuge.py` generates patterns and uses them with the tools below.
+    - They are checked with `httpx` to ensure live domains are saved as the final output using `anew`. 
+    - It will check if the live file exists in the SubdomainTool results directory first, falling back to subdomains.txt. If it's the first run, **the file wont be found unless manually added** as shown below.
 
-## Tool Options
+## Tools & Use
 
 ### Permutation and Validation
 - **AlterX**
@@ -20,6 +25,7 @@ _**Permutated enumeration for elucidating esoteric subdomains**_
 - **Ripgen**
 - **PureDNS**
 - **Httpx**
+- **Anew**
 - WIP: **Lepus**
 
 ## Usage
@@ -57,30 +63,9 @@ chmod +x subterfuge.py
 ```
 
 ### Example Output
-(Using only ripgen)
-```
-              8        o                d'b                      
-              8        8                8                        
-.oPYo. o    o 8oPYo.  o8P .oPYo. oPYo. o8P  o    o .oPYo. .oPYo. 
-Yb..   8    8 8    8   8  8oooo8 8  `'  8   8    8 8    8 8oooo8 
-  'Yb. 8    8 8    8   8  8.     8      8   8    8 8    8 8.     
-`YooP' `YooP' `YooP'   8  `Yooo' 8      8   `YooP' `YooP8 `Yooo' 
-:.....::.....::.....:::..::.....:..:::::..:::.....::....8 :.....:
-:::::::::::::::::::::::::::::::::::::::::::::::::::::ooP'.:::::::
-:::::::::::::::::::::::::::::::::::::::::::::::::::::...:::::::::
 
-Discovery initiated for: glassdoor.com
-Using subdomain_file: /results/glassdoor.com/subdomains.txt
-Number of subdomains: 64
-Number of patterns: 12
-Running ripgen...
-ripgen finished - Total Permutations: 26253
-Checking which subdomains are live...
-Checking subdomains: 100%|████████████████████| 26253/26253 [4:39:47<00:00,  1.56subdomain/s]
-Live subdomains saved to /results/glassdoor.com/live_subdomains.txt      
-Total unique live subdomains found: 16005.                                                   
-Runtime: 4:39:48 (hh:mm:ss).                                                                                                                           
-```
+![image](https://github.com/user-attachments/assets/d3b71636-10c3-4992-add7-2ed6b3656c15)
+
 
 > [!IMPORTANT]  
 > Generated lists of permutations can be large and httpx csn take a long time.
