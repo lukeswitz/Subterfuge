@@ -13,7 +13,7 @@
 Run the Script with a Domain:
 
 ```bash
-python3 subterfuge_finder.py example.com
+python3 subTerra.py example.com
 ```
 
 > [!NOTE]  
