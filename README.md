@@ -75,7 +75,6 @@ chmod +x subterfuge.py
 > Disabling tools or using less patterns with gotator and alterx will lower the amount of possible subdomains. 
 > You can also tone this down by changing flags in the script commands or commenting out their use in the main function. Or, add your own commands to the list & mod as needed. 
 
-
 ## Contributing
 
 Open issues or submit pull requests to contribute.
@@ -83,3 +82,7 @@ Open issues or submit pull requests to contribute.
 ## License
 
 Licensed under the MIT License.
+
+## Disclaimer
+
+The use of this software and any included tools is provided "as is" without any warranties, expressed or implied. The authors and contributors are not responsible for any damages, data loss, or legal issues that may arise from the use or misuse of this repository. Users are advised to comply with all applicable laws and regulations when using the tools provided. By using this software, you agree to hold the authors and contributors harmless from any liability or claims resulting from its use.
