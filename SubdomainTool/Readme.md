@@ -1,12 +1,14 @@
 # SubTerra 
+![image](https://github.com/user-attachments/assets/58c8366c-cb93-4196-a424-dc076bc77729)
+
 **Powerful Subdomain Discovery:**
 
 - Each valid subdomain is checked for life using concurrent httpx tasks.
 - A final list is stored in a folder for use with Subterfuge, along with a `live_subdomains.txt`. 
 
 ## Prerequisites
-- `pip`
-- Subterra will install all other necessary tools if they are not found on the system. 
+- `pip` & `python`
+    - Subterra will install all other necessary tools if they are not found on the system. 
 
 ## Usage
 
@@ -17,7 +19,7 @@ python3 subTerra.py example.com
 ```
 
 > [!NOTE]  
-> Turn off live domain check or enable amass:
+> Flags haven't been added yet- to turn off live domain check or enable amass, etc:
 
 #### 1. Disable httpx check
 Comment out the line around `170` as shown:
